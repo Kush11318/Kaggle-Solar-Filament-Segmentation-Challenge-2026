@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Large model binaries and checkpoints
+checkpoints/
+*.pt
+*.pth
+*.bin
+*.pt.gz
+*.tar.gz
+
+# Raw competition datasets & archive
+filament-segmentation-2026/
+archive/
+scratch/
+PAPERS/
+experiments/
+analysis/
+evaluation/
+scripts/
+
+# Intermediate experimental submissions (keep only official champion)
+submission_*.csv
+!submission_champion_04618.csv
+
+# Exploration notebooks and retrospective logs
+*.ipynb
+!MAGFiLO_1_0_JURY_SUBMISSION_NOTEBOOK.ipynb
+COMPREHENSIVE_PROJECT_RETROSPECTIVE_AND_MODEL_INVENTORY.md
+LEADERBOARD_EXPERIMENTS.md
+train_advanced.py
+train_resnet34.py
+triple_512_sweep_results.json
+
+# Local logs and environment files
+*.log
+.env
+.vscode/
+.idea/

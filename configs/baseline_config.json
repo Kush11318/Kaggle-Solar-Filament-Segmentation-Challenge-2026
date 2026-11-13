@@ -1,0 +1,34 @@
+{
+  "experiment_name": "baseline_unet_512",
+  "dataset": {
+    "json_path": "d:/Kaggle/filament-segmentation-2026/MAGFiLO_1.0_Kaggle_2026/train/MAGFiLO_1.0_Annotations_kaggle2026_train.json",
+    "train_img_dir": "d:/Kaggle/filament-segmentation-2026/MAGFiLO_1.0_Kaggle_2026/train/train_images",
+    "test_img_dir": "d:/Kaggle/filament-segmentation-2026/MAGFiLO_1.0_Kaggle_2026/test/test_images",
+    "split_manifest_path": "d:/Kaggle/splits/train_val_split_80_20.json"
+  },
+  "model": {
+    "architecture": "UNet",
+    "in_channels": 1,
+    "out_channels": 1,
+    "base_channels": 32
+  },
+  "training": {
+    "patch_size": 512,
+    "pos_ratio": 0.75,
+    "batch_size": 8,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "epochs": 15,
+    "seed": 42
+  },
+  "inference": {
+    "tile_patch_size": 512,
+    "tile_overlap": 128,
+    "threshold": 0.5,
+    "min_area": 40
+  },
+  "checkpoints": {
+    "dir": "d:/Kaggle/checkpoints",
+    "save_best_metric": "val_pq"
+  }
+}
