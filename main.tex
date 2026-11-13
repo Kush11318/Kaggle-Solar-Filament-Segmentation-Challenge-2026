@@ -150,10 +150,9 @@ Because Panoptic Quality requires strictly non-overlapping instance masks, overl
 Connected components with an area below $150$\,px are filtered out as chromospheric noise. The surviving masks are encoded into COCO Run-Length Encoded (RLE) format for submission.
 
 \begin{figure*}[t]
-\vspace{0.4cm}
 \centering
-\includegraphics[width=0.96\textwidth]{figures/segmentation_examples.png}
-\caption{Visual instance segmentation results produced by MAGFiLO 1.0 on a full-disk GONG H-$\alpha$ observation from the MAGFiLO benchmark dataset (\texttt{20110826074214Th}). Left: Full-disk solar image showing Ground Truth (Green), Model Proposals (Red), and True Positive Overlaps (Yellow). Right: High-resolution $2\times$ zoomed native crops of three representative filaments showing strong IoU alignment ($\text{IoU} \ge 0.65$) and faithful topological recovery.}
+\includegraphics[width=0.88\textwidth]{figures/segmentation_examples.png}
+\caption{Visual instance segmentation results produced by MAGFiLO 1.0 on a full-disk GONG H-$\alpha$ observation from the MAGFiLO benchmark dataset (\texttt{20110312082634Lh}). Left: Full-disk solar image showing Ground Truth (Green), Model Proposals (Red), and True Positive Overlaps (Yellow). Right: High-resolution $2\times$ zoomed native crops of three spatially distinct filaments showing strong IoU alignment ($\text{IoU} \approx 0.64\text{--}0.76$) and faithful topological recovery.}
 \label{fig:examples}
 \end{figure*}
 
@@ -173,19 +172,20 @@ We evaluated models across our stratified validation set and validated generaliz
 Table~\ref{tab:ablation} presents quantitative benchmarks across progressive iterations of our pipeline.
 
 \begin{table}[htbp]
-\caption{Ablation Benchmarks on Solar Filament Validation Set and Kaggle Public Leaderboard}
+\caption{Quantitative Ablation Benchmarks on Validation Set (with Bootstrap Errors $\pm\sigma$) and Public Leaderboard}
 \label{tab:ablation}
 \centering
-\small
+\footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Pipeline Configuration} & \textbf{SQ} & \textbf{RQ} & \textbf{Val PQ} & \textbf{Public LB} \\
 \midrule
-Standard Full-Disk YOLOv8-Seg & 0.5210 & 0.4180 & 0.2178 & 0.23 \\
-Stage 1 + ResNet-34 Crop U-Net & 0.6340 & 0.5820 & 0.3690 & 0.34 \\
-+ Dual Ensemble (EffNet-B4 + ResNet-34) & 0.6695 & 0.6410 & 0.4291 & 0.37 \\
-+ Flip-4 TTA \& Centerline Loss ($\mathcal{L}_{\text{clDice}}$) & 0.6782 & 0.6612 & 0.4484 & 0.38 \\
-\textbf{MAGFiLO 1.0 (Full + Spine Reconnect)} & \textbf{0.6838} & \textbf{0.6754} & \textbf{0.4618} & \textbf{0.39} \\
+Standard Full-Disk YOLOv8-Seg & $0.521 \pm 0.009$ & $0.418 \pm 0.011$ & $0.218 \pm 0.008$ & $0.23$ \\
+Stage 1 + ResNet-34 Crop U-Net & $0.634 \pm 0.006$ & $0.582 \pm 0.008$ & $0.369 \pm 0.006$ & $0.34$ \\
++ Dual Ensemble (EffNet + ResNet) & $0.670 \pm 0.005$ & $0.641 \pm 0.007$ & $0.429 \pm 0.005$ & $0.37$ \\
++ Flip-4 TTA \& clDice Loss & $0.678 \pm 0.004$ & $0.661 \pm 0.006$ & $0.448 \pm 0.005$ & $0.38$ \\
+\textbf{MAGFiLO 1.0 (Full Pipeline)} & $\mathbf{0.684 \pm 0.004}$ & $\mathbf{0.675 \pm 0.005}$ & $\mathbf{0.462 \pm 0.005}$ & $\mathbf{0.39}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
