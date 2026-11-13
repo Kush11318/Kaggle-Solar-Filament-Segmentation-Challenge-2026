@@ -44,7 +44,7 @@
   \city{Indore}
   \country{India}
 }
-\email{nandinigupta@acropolis.in}
+\email{nandinigupta230470@acropolis.in}
 
 \author{Kushagra Sharma} 
 \affiliation{%
@@ -52,7 +52,7 @@
   \city{Indore}
   \country{India}
 }
-\email{sharmakushagra11318@gmail.com}
+\email{kushagra.sharma11290@gmail.com}
 
 \begin{abstract}
     This report describes our solution to the Solar Filament Segmentation Challenge~2026, a Kaggle competition on automatic segmentation of solar filaments in GONG H-$\alpha$ observations. To overcome the extreme scale disparity between $2048\times2048$ full-disk imagery and fine filamentary spines ($<15$\,px width), optical limb darkening, and topological fragmentation, we developed \textbf{MAGFiLO 1.0}. Our method decouples candidate detection from high-resolution mask extraction: a macro scout detector (YOLO11m at $1280\times1280$) localizes candidate regions with a 20\% contextual safety margin, followed by a dual deep convolutional U-Net ensemble (EfficientNet-B4 and ResNet-34) operating on native square crops at $512\times512$ resolution. The networks are trained using a topology-preserving compound loss combining Centerline Dice ($\mathcal{L}_{\text{clDice}}$), soft Dice, and binary cross-entropy, complemented by 4-fold test-time augmentation (TTA). To mitigate false negative penalties on the Panoptic Quality (PQ) metric, a solar physics-grounded Bernasconi medial-axis collinear spine reconnection algorithm bridges fractured magnetic flux ropes prior to greedy disjoint instance allocation. On the official benchmark, MAGFiLO 1.0 achieves a validation PQ of \textbf{0.4618} (SQ = 0.6838, RQ = 0.6754) and a competitive Public Leaderboard score of \textbf{0.39} with 1,221 detected instances. All code and pre-trained weights are open-sourced at \url{https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026}.
