@@ -35,7 +35,7 @@
 
 \begin{document}
 
-\title{Decoupled Native Square Crop Architecture with Medial-Axis Collinear Spine Reconnection for Solar Filament Segmentation}
+\title[MAGFiLO 1.0: Solar Filament Segmentation]{Decoupled Native Square Crop Architecture with Medial-Axis Collinear Spine Reconnection for Solar Filament Segmentation}
 \subtitle{A Solution to the Solar Filament Segmentation Challenge 2026} % DO NOT CHANGE
 
 \author{Nandini Gupta} 
@@ -90,8 +90,9 @@ Guide mode is on.}
 The MAGFiLO 1.0 data pipeline is structured into four sequential stages: (1) physics-guided optical preprocessing, (2) macro scout candidate proposal localization, (3) native square crop dual-U-Net segmentation with test-time augmentation, and (4) topological spine reconnection with greedy disjoint mask allocation. Fig.~\ref{fig:pipeline} summarizes the end-to-end architecture.
 
 \begin{figure*}[t]
+\vspace{0.4cm}
 \centering
-\includegraphics[width=\textwidth]{figures/pipeline.png}
+\includegraphics[width=0.96\textwidth]{figures/pipeline.png}
 \caption{End-to-end schematic workflow of the MAGFiLO 1.0 solar filament segmentation framework.}
 \label{fig:pipeline}
 \end{figure*}
@@ -149,8 +150,9 @@ Because Panoptic Quality requires strictly non-overlapping instance masks, overl
 Connected components with an area below $150$\,px are filtered out as chromospheric noise. The surviving masks are encoded into COCO Run-Length Encoded (RLE) format for submission.
 
 \begin{figure*}[t]
+\vspace{0.4cm}
 \centering
-\includegraphics[width=\textwidth]{figures/segmentation_examples.png}
+\includegraphics[width=0.96\textwidth]{figures/segmentation_examples.png}
 \caption{Visual instance segmentation results produced by MAGFiLO 1.0 on a full-disk GONG H-$\alpha$ observation from the MAGFiLO benchmark dataset (\texttt{20110826074214Th}). Left: Full-disk solar image showing Ground Truth (Green), Model Proposals (Red), and True Positive Overlaps (Yellow). Right: High-resolution $2\times$ zoomed native crops of three representative filaments showing strong IoU alignment ($\text{IoU} \ge 0.65$) and faithful topological recovery.}
 \label{fig:examples}
 \end{figure*}
