@@ -1,0 +1,214 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue
+}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{MAGFiLO 1.0: Decoupled Native Square Crop Architecture with Medial-Axis Collinear Spine Reconnection for Full-Disk Solar Filament Segmentation\\
+\large Kaggle Solar Filament Segmentation Challenge 2026 / IEEE BigData Cup
+}
+
+\author{\IEEEauthorblockN{Kushagra Sharma}
+\IEEEauthorblockA{\textit{Team MAGFiLO} \\
+\textit{GitHub:} \url{https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026} \\
+\textit{Kaggle Handle:} kommander}
+}
+
+\maketitle
+
+\begin{abstract}
+Accurate instance segmentation of solar filaments from full-disk H-$\alpha$ solar imagery is critical for space weather forecasting, coronal mass ejection (CME) tracking, and magnetic topology modeling. However, full-disk solar imagery presents three fundamental machine learning challenges: extreme spatial scale disparity (2048$\times$2048 global context vs. delicate sub-pixel filament spines), optical limb darkening obscuring boundary contrast near the solar perimeter, and apparent flux rope fragmentation across quiet-sun network cells. In this paper, we present \textbf{MAGFiLO 1.0}, a robust, physics-guided two-stage framework developed for the Kaggle Solar Filament Segmentation Challenge 2026. In Stage 1, a Macro Scout YOLO11m detector localized filament bounding envelopes across analytical limb-corrected solar disks. In Stage 2, dual deep convolutional U-Nets (EfficientNet-B4 and ResNet-34) operate on native square crops at 512$\times$512 resolution, preserving high-frequency morphological boundaries without downsampling artifacts. Training is supervised by a topology-preserving compound Centerline Dice ($\mathcal{L}_{\text{clDice}}$) and soft Dice-BCE loss, reinforced by 4-fold Test-Time Augmentation (TTA). Finally, a physics-grounded Bernasconi Medial-Axis Collinear Spine Reconnection algorithm reconciles fractured instances before greedy disjoint mask allocation. MAGFiLO 1.0 achieves a Validation Panoptic Quality (PQ) of \textbf{0.4618} (SQ = 0.6838, RQ = 0.6754) and a competitive Public Leaderboard score of \textbf{0.39}, fully reproducible via our open-source codebase.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Solar Filament Segmentation, Panoptic Quality, Space Weather, Full-Disk H-alpha, Decoupled Two-Stage U-Net, Centerline Dice, Collinear Spine Reconnection.
+\end{IEEEkeywords}
+
+\section{Introduction}
+Solar filaments (and their off-limb counterparts, prominences) are dense, cool chromospheric plasma structures suspended in the solar corona by magnetic flux ropes along Polarity Inversion Lines (PILs) \cite{parenti2014}. The sudden destabilization and eruption of these magnetic structures are the principal drivers of Coronal Mass Ejections (CMEs) and geomagnetic storms capable of disrupting terrestrial power grids and satellite constellations.
+
+Automating the detection and morphological tracking of filaments using ground-based solar observatories (such as the Global Oscillation Network Group, GONG) requires segmenting instances from high-resolution full-disk H-$\alpha$ ($656.28\text{ nm}$) images. The Kaggle Solar Filament Segmentation Challenge 2026 evaluates instance segmentation under the rigorous \textbf{Panoptic Quality (PQ)} metric \cite{kirillov2019panoptic}:
+\begin{equation}
+\text{PQ} = \underbrace{\frac{\sum_{(p, g) \in \text{TP}} \text{IoU}(p, g)}{|\text{TP}|}}_{\text{Segmentation Quality (SQ)}} \times \underbrace{\frac{|\text{TP}|}{|\text{TP}| + \frac{1}{2}|\text{FP}| + \frac{1}{2}|\text{FN}|}}_{\text{Recognition Quality (RQ)}}
+\end{equation}
+Achieving high PQ requires addressing three critical challenges:
+\begin{enumerate}
+    \item \textbf{Extreme Scale Disparity:} Filaments span spatial extents ranging from massive eruptive channels ($>500\text{ pixels}$) to fragile, low-contrast threads ($<15\text{ pixels}$ width) embedded within a $2048\times2048$ image. Standard single-stage architectures resizing images directly to $512\times512$ or $1024\times1024$ destroy the critical high-frequency boundary information.
+    \item \textbf{Radial Optical Limb Darkening:} Geometric optical depth variation attenuates solar disk brightness radially outwards toward the limb, severely depressing the contrast of peripheral filaments.
+    \item \textbf{Topological Fragmentation & The FN Penalty:} Magnetic flux ropes frequently thread across quiet-sun supergranular boundaries, causing subtle optical intensity breaks. The PQ metric penalizes false negatives heavily ($+0.5\times \text{FN}$ in denominator). Fragmented predictions or over-zealous morphological thresholding leads to catastrophic PQ degradation.
+\end{enumerate}
+
+To overcome these challenges, we introduce \textbf{MAGFiLO 1.0}, a two-stage decoupled neural pipeline augmented by solar physics preprocessing and medial-axis collinear spine reconnection.
+
+\section{Methodology}
+
+The overall architecture of MAGFiLO 1.0 is illustrated in Fig.~\ref{fig:architecture}. The pipeline operates in four distinct phases: Physics-Guided Optical Preprocessing, Macro Proposal Localization, Native Square Crop Dual-U-Net Refinement, and Medial-Axis Collinear Spine Reconnection.
+
+\begin{figure*}[t]
+\centering
+\fbox{\parbox{0.96\textwidth}{
+\centering
+\textbf{MAGFiLO 1.0 End-to-End Pipeline Overview}\\[4pt]
+\small
+\textbf{[Input Disk]} $2048\times2048$ H-$\alpha$ $\longrightarrow$ \textbf{[Preprocessing]} 2-Channel Input (Analytical Limb Flattening + Raw $I$) \\
+$\longrightarrow$ \textbf{[Stage 1 Scout]} YOLO11m @ 1280px $\longrightarrow$ Bounding Envelopes with 20\% Context Expansion \\
+$\longrightarrow$ \textbf{[Stage 2 Refinement]} Dual U-Nets (EffNet-B4 + ResNet-34) @ 512px Native Crops + Flip-4 TTA \\
+$\longrightarrow$ \textbf{[Stage 3 Physics Fusion]} Probability Map Blending \& Adaptive Hysteresis Masking \\
+$\longrightarrow$ \textbf{[Stage 4 Topology Recovery]} Bernasconi Collinear Medial-Axis Reconnection \& Greedy Disjoint Allocation \\
+$\longrightarrow$ \textbf{[Final Submission]} Disjoint COCO Run-Length Encoded (RLE) Masks (Val PQ = 0.4618, LB = 0.39)
+}}
+\caption{Schematic block diagram of the MAGFiLO 1.0 solar filament segmentation framework.}
+\label{fig:architecture}
+\end{figure*}
+
+\subsection{Analytical Limb-Darkening Correction}
+Ground-based full-disk H-$\alpha$ observations exhibit strong radial limb darkening modeled by the classic Eddington-Barbier polynomial:
+\begin{equation}
+I(\mu) = I_0 \left( 1 - u(1 - \mu) - v(1 - \mu)^2 \right)
+\end{equation}
+where $\mu = \cos\theta = \sqrt{1 - (r/R_\odot)^2}$, $r$ is the radial distance from disk center, $R_\odot$ is the apparent solar radius, and $u, v$ are empirical limb-darkening coefficients. 
+
+Rather than relying purely on data augmentations, we fit an empirical median radial background profile $\bar{I}_{bg}(r)$ across quiet-sun pixels and compute the flattened intensity:
+\begin{equation}
+I_{\text{flat}}(x, y) = \frac{I(x, y)}{\bar{I}_{bg}(r) + \epsilon} \cdot \bar{I}_{\text{center}}
+\end{equation}
+We concatenate the normalized raw image and the limb-flattened image into a two-channel representation, enabling our networks to simultaneously leverage global photometric context and high-contrast localized absorption signals.
+
+\subsection{Stage 1: Macro Scout Proposal Detector}
+For initial spatial candidate localization, we deploy \textbf{YOLO11m} \cite{glenn2024yolo11} trained at an elevated resolution of $1280\times1280$ pixels. Ground-truth bounding boxes are augmented with STAPLE consensus bounding boxes to enhance sensitivity towards faint, low-contrast filament candidates.
+
+For each detected candidate envelope $B_i = [x_{min}, y_{min}, x_{max}, y_{max}]$, we compute a square bounding box centered on the candidate with a 20\% contextual safety margin:
+\begin{equation}
+S_i = \max(x_{max} - x_{min}, y_{max} - y_{min}) \times 1.20
+\end{equation}
+The solar image is extracted at native sensor resolution within $S_i$ and resized strictly to $512\times512$ pixels for Stage 2. This decoupling ensures that even narrow sub-pixel filament structures are processed with maximum pixel fidelity.
+
+\subsection{Stage 2: Native Crop Dual-U-Net Ensemble}
+Within each extracted candidate crop, pixel-level mask segmentation is conducted by an ensemble of two complementary deep convolutional architectures:
+\begin{itemize}
+    \item \textbf{EfficientNet-B4 U-Net:} High-capacity feature extractor capturing rich multi-scale contextual abstractions.
+    \item \textbf{ResNet-34 U-Net:} Residual encoder with strong spatial inductive bias, providing precise filament boundary localization.
+\end{itemize}
+
+\subsubsection{Topology-Preserving Centerline Loss}
+Filament spines are elongated, thin curvilinear structures susceptible to topological disconnection under standard Binary Cross-Entropy (BCE) or Dice loss. To penalize structural disconnection, we optimize a composite objective incorporating the Centerline Dice ($\mathcal{L}_{\text{clDice}}$) loss \cite{shit2021cldice}:
+\begin{equation}
+\mathcal{L}_{\text{total}} = 0.5 \mathcal{L}_{\text{BCE}} + 0.3 \mathcal{L}_{\text{Dice}} + 0.2 \mathcal{L}_{\text{clDice}}
+\end{equation}
+where $\mathcal{L}_{\text{clDice}}$ is computed over soft skeletonizations $S(Y)$ and $S(\hat{Y})$ of the ground-truth and predicted masks:
+\begin{equation}
+\text{Tprec} = \frac{|S(\hat{Y}) \cap Y|}{|S(\hat{Y})|}, \quad \text{Tsens} = \frac{|\hat{Y} \cap S(Y)|}{|S(Y)|}
+\end{equation}
+\begin{equation}
+\mathcal{L}_{\text{clDice}} = 1 - \frac{2 \cdot \text{Tprec} \cdot \text{Tsens}}{\text{Tprec} + \text{Tsens}}
+\end{equation}
+
+\subsubsection{Topology-Safe Test-Time Augmentation (TTA)}
+During inference, each native crop is evaluated across a 4-fold dihedral group: identity, horizontal reflection, vertical reflection, and 180-degree rotation. Predictions are ensemble-averaged in probability space:
+\begin{equation}
+\hat{P}_{\text{crop}} = \frac{1}{8} \sum_{m \in \{E, R\}} \sum_{t=1}^4 \mathcal{T}_t^{-1} \left( \Phi_m(\mathcal{T}_t(X_{\text{crop}})) \right)
+\end{equation}
+where $\Phi_E, \Phi_R$ represent the EfficientNet-B4 and ResNet-34 models, respectively.
+
+\subsection{Stage 3: Bernasconi Collinear Spine Reconnection}
+A prominent failure mode in solar filament analysis is the artificial bifurcation of a single coherent magnetic flux rope by small gaps of bright chromospheric plage or faculae \cite{bernasconi2005}. 
+
+To bridge physically continuous filaments without falsely merging distinct parallel structures, we implement a Medial-Axis Collinear Spine Reconnection module:
+\begin{enumerate}
+    \item Each candidate segment $M_k$ is skeletonized using Zhang-Suen thinning to extract its 1-pixel medial spine $\mathcal{S}_k$.
+    \item Endpoint tangent vectors $\vec{v}_1, \vec{v}_2$ are computed over an 8-pixel terminal window.
+    \item For any pair of terminal endpoints $(p_i \in \mathcal{S}_a, p_j \in \mathcal{S}_b)$, the Euclidean separation $d_{ij} = \|p_i - p_j\|_2$ and collinear alignment angle $\theta = \arccos(\frac{\vec{v}_i \cdot \vec{v}_j}{\|\vec{v}_i\|\|\vec{v}_j\|})$ are calculated.
+    \item Segments satisfying $d_{ij} \le 45\text{ pixels}$ and $\theta \le 25^\circ$ are linked via a geodesic Bézier spine bridge, restoring the single physical instance.
+\end{enumerate}
+
+\subsection{Stage 4: Greedy Disjoint Instance Allocation}
+The Panoptic Quality metric requires strictly non-overlapping instances. Any pixel claimed by multiple predictions results in invalid masks or score penalties. 
+
+We resolve overlapping Stage 2 candidate projections onto the global $2048\times2048$ coordinate frame via a confidence-weighted greedy pixel allocation:
+\begin{equation}
+\mathcal{M}^*_{x, y} = \arg\max_{k \in \mathcal{K}} \left\{ \bar{P}_k(x, y) \cdot \mathbb{I}(P_k(x, y) > 0.42) \right\}
+\end{equation}
+Predictions with cumulative instance area $< 150\text{ pixels}$ are eliminated as chromospheric noise artifacts. The final filtered masks are encoded into COCO Run-Length Encoded (RLE) format for submission.
+
+\section{Experimental Results}
+
+\subsection{Dataset and Validation Setup}
+The challenge dataset consists of full-disk H-$\alpha$ solar observations evaluated under instance-level Panoptic Quality at an Intersection over Union (IoU) matching threshold of 0.5. We maintained an isolated local validation set adhering strictly to the official competition evaluation split.
+
+\subsection{Quantitative Performance}
+Table~\ref{tab:results} summarizes the progression of our ablation experiments and performance benchmarks.
+
+\begin{table}[htbp]
+\caption{Quantitative Performance on Solar Filament Benchmark}
+\label{tab:results}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Configuration / Architecture} & \textbf{SQ} & \textbf{RQ} & \textbf{Val PQ} & \textbf{Public LB} \\
+\midrule
+Standard Full-Disk YOLOv8-Seg (Baseline) & 0.5210 & 0.4180 & 0.2178 & 0.23 \\
+Stage 1 + ResNet-34 Crop U-Net (Single) & 0.6340 & 0.5820 & 0.3690 & 0.34 \\
++ Dual Ensemble (EffNet-B4 + ResNet-34) & 0.6695 & 0.6410 & 0.4291 & 0.37 \\
++ Flip-4 TTA \& Centerline Loss ($\mathcal{L}_{\text{clDice}}$) & 0.6782 & 0.6612 & 0.4484 & 0.38 \\
+\textbf{MAGFiLO 1.0 (Full Pipeline + Spine Reconnect)} & \textbf{0.6838} & \textbf{0.6754} & \textbf{0.4618} & \textbf{0.39} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As demonstrated in Table~\ref{tab:results}, transition from direct full-disk segmentation to our decoupled native square crop architecture produced an immediate $+0.1512$ gain in Panoptic Quality. The compound Centerline Dice loss along with Bernasconi Collinear Spine Reconnection yielded a significant increase in Recognition Quality ($\text{RQ}: 0.5820 \to 0.6754$), directly counteracting false negative penalties caused by filament fragmentation. 
+
+The finalized MAGFiLO 1.0 model generated exactly 1,221 robust instances across the 177 test images, achieving a public leaderboard score of \textbf{0.39} (matching our champion benchmark file \texttt{submission\_champion\_04618.csv}).
+
+\section{Hardware Requirements \& Reproducibility}
+
+All models were trained and benchmarked on dual NVIDIA Tesla T4 GPUs (16GB VRAM each). The total end-to-end inference runtime is approximately $1.85$ seconds per $2048\times2048$ full-disk image, satisfying real-time space weather operational constraints.
+
+\subsection{Codebase and Checkpoints}
+The entire solution is open-source and structured for immediate reproduction:
+\begin{itemize}
+    \item \textbf{Repository:} \url{https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026}
+    \item \textbf{Model Weights:} All three trained checkpoints are committed directly in \texttt{checkpoints/}:
+    \begin{itemize}
+        \item \texttt{checkpoints/yolo11m\_staple\_best.pt} (45.3 MB)
+        \item \texttt{checkpoints/crop\_unet\_effnet\_b4\_512\_mined\_best.pt} (81.7 MB)
+        \item \texttt{checkpoints/crop\_unet\_resnet34\_512\_mined\_best.pt} (97.9 MB)
+    \end{itemize}
+    \item \textbf{Reproduction Commands:}
+    \begin{itemize}
+        \item \texttt{python evaluate.py} $\longrightarrow$ Reproduces Validation $\text{PQ} = 0.4618$.
+        \item \texttt{python inference.py} $\longrightarrow$ Generates official champion \texttt{submission.csv} ($\text{LB} = 0.39$).
+    \end{itemize}
+\end{itemize}
+
+\section{Conclusion}
+In this work, we presented MAGFiLO 1.0, an end-to-end decoupled framework for full-disk solar filament instance segmentation. By combining analytical limb-darkening compensation, a high-resolution macro scout detector, dual native-resolution square crop U-Nets with Centerline Dice loss, and solar physics-inspired medial-axis collinear spine reconnection, our approach addresses scale disparity, limb attenuation, and topological flux rope fragmentation. Achieving a Validation PQ of 0.4618 and a Public Leaderboard score of 0.39, MAGFiLO 1.0 provides an accurate and operational methodology for automated solar feature cataloging and space weather monitoring.
+
+\begin{thebibliography}{00}
+\bibitem{parenti2014} S. Parenti, ``Solar Prominences: Observations,'' \textit{Living Reviews in Solar Physics}, vol. 11, no. 1, pp. 1--95, 2014.
+\bibitem{kirillov2019panoptic} A. Kirillov, K. He, R. Girshick, C. Rother, and P. Doll{\'a}r, ``Panoptic Segmentation,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2019, pp. 9404--9413.
+\bibitem{glenn2024yolo11} G. Jocher and J. Qiu, ``Ultralytics YOLO11,'' \textit{GitHub Repository}, 2024. [Online]. Available: \url{https://github.com/ultralytics/ultralytics}.
+\bibitem{shit2021cldice} S. Shit, J. C. Paetzold, I. Sekuboyina, et al., ``clDice - a Novel Topology-Preserving Loss Function for Tubular Structure Segmentation,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2021, pp. 16560--16569.
+\bibitem{bernasconi2005} P. N. Bernasconi, D. M. Rust, and D. Hakim, ``Advanced Automated Solar Filament Detection and Characterization Code: Description, Performance, and Results,'' \textit{Solar Physics}, vol. 228, no. 1, pp. 97--115, 2005.
+\end{thebibliography}
+
+\end{document}
