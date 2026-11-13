@@ -4,9 +4,12 @@ __pycache__/
 *$py.class
 .pytest_cache/
 
-# Large model binaries and checkpoints
-checkpoints/
-*.pt
+# Large model binaries and checkpoints (keep only official champion weights)
+checkpoints/*
+!checkpoints/yolo11m_staple_best.pt
+!checkpoints/crop_unet_effnet_b4_512_mined_best.pt
+!checkpoints/crop_unet_resnet34_512_mined_best.pt
+!checkpoints/disk_cache.json
 *.pth
 *.bin
 *.pt.gz
