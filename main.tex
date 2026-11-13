@@ -148,6 +148,13 @@ Because Panoptic Quality requires strictly non-overlapping instance masks, overl
 \end{equation}
 Connected components with an area below $150$\,px are filtered out as chromospheric noise. The surviving masks are encoded into COCO Run-Length Encoded (RLE) format for submission.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/segmentation_examples.png}
+\caption{Visual instance segmentation results produced by MAGFiLO 1.0 on a full-disk GONG H-$\alpha$ observation from the MAGFiLO benchmark dataset (\texttt{20110826074214Th}). Left: Full-disk solar image showing Ground Truth (Green), Model Proposals (Red), and True Positive Overlaps (Yellow). Right: High-resolution $2\times$ zoomed native crops of three representative filaments showing strong IoU alignment ($\text{IoU} \ge 0.65$) and faithful topological recovery.}
+\label{fig:examples}
+\end{figure*}
+
 % ==================================== %
 %              EVALUATION              %
 % ==================================== %
