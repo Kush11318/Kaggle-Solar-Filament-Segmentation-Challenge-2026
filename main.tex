@@ -91,30 +91,7 @@ The MAGFiLO 1.0 data pipeline is structured into four sequential stages: (1) phy
 
 \begin{figure*}[t]
 \centering
-\begin{tikzpicture}[
-    node distance=1.2cm and 0.8cm,
-    box/.style={rectangle, draw=black!80, fill=blue!5, rounded corners=3pt, thick, align=center, inner sep=6pt, font=\small},
-    hlbox/.style={rectangle, draw=red!70, fill=red!5, rounded corners=3pt, thick, align=center, inner sep=6pt, font=\small},
-    arrow/.style={-{Stealth[length=2.5mm]}, thick, draw=black!70}
-]
-    \node[box] (input) {\textbf{Full-Disk Input}\\$2048\times2048$ H-$\alpha$};
-    \node[box, right=of input] (prep) {\textbf{Optical Preprocessing}\\Analytical Limb Flattening\\$I_{\text{flat}} + I_{\text{norm}}$ (2 Channels)};
-    \node[box, right=of prep] (stage1) {\textbf{Stage 1: Macro Scout}\\YOLO11m @ 1280px\\STAPLE Augmented Boxes};
-    \node[hlbox, right=of stage1] (crops) {\textbf{Native Square Crops}\\$512\times512$ with $20\%$ Margin\\Full-Resolution Detail};
-    
-    \node[box, below=1.0cm of crops] (stage2) {\textbf{Stage 2: Dual U-Net}\\EfficientNet-B4 + ResNet-34\\clDice + Soft Dice Loss};
-    \node[box, left=of stage2] (tta) {\textbf{Inference \& TTA}\\4-Fold Dihedral TTA\\Probability Map Fusion};
-    \node[hlbox, left=of tta] (spine) {\textbf{Spine Reconnection}\\Bernasconi Collinear Medial-Axis\\$d \le 45$\,px, $\theta \le 25^\circ$};
-    \node[box, left=of spine] (output) {\textbf{Final Submission}\\Greedy Disjoint Allocation\\Area $>150$\,px $\to$ COCO RLE};
-
-    \draw[arrow] (input) -- (prep);
-    \draw[arrow] (prep) -- (stage1);
-    \draw[arrow] (stage1) -- (crops);
-    \draw[arrow] (crops) -- (stage2);
-    \draw[arrow] (stage2) -- (tta);
-    \draw[arrow] (tta) -- (spine);
-    \draw[arrow] (spine) -- (output);
-\end{tikzpicture}
+\includegraphics[width=\textwidth]{figures/pipeline.png}
 \caption{End-to-end schematic workflow of the MAGFiLO 1.0 solar filament segmentation framework.}
 \label{fig:pipeline}
 \end{figure*}
