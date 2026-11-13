@@ -121,6 +121,7 @@ class TwoStageCropPipeline:
         model_weights: Optional[List[float]] = None,
         crop_size: int = 256,
         use_box_prompt: Optional[bool] = None,
+        recurrent_rounds: int = 1,
     ):
         if crop_unet_model is None:
             self.unets = []
@@ -154,6 +155,7 @@ class TwoStageCropPipeline:
         self.yolo_imgsz = yolo_imgsz
         self.quad_imgsz = quad_imgsz
         self.fallback_to_stage1 = fallback_to_stage1
+        self.recurrent_rounds = recurrent_rounds
         if use_box_prompt is not None:
             self.use_box_prompt = use_box_prompt
         else:
@@ -390,6 +392,17 @@ class TwoStageCropPipeline:
 
             # Predict with Topology-Safe Flip-4 TTA (supports ensembling)
             crop_prob = self._predict_crop_with_tta(crop_input)
+
+            if self.use_box_prompt and self.recurrent_rounds > 1:
+                for _ in range(1, self.recurrent_rounds):
+                    bin_p = (crop_prob >= self.refine_thresh).astype(np.uint8)
+                    if np.any(bin_p):
+                        k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+                        dilated_p = cv2.dilate(bin_p, k).astype(np.float32)
+                        crop_input_r = np.stack([ch0, ch1, dilated_p], axis=-1)
+                        crop_prob = self._predict_crop_with_tta(crop_input_r)
+                    else:
+                        break
 
             # Un-resize continuous probability map back to native crop dimensions
             native_prob = cv2.resize(crop_prob, (crop_w, crop_h), interpolation=cv2.INTER_LINEAR)
