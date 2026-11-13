@@ -33,6 +33,8 @@ def parse_args():
     parser.add_argument("--det_conf", type=float, default=0.24, help="Stage 1 detection confidence threshold")
     parser.add_argument("--refine_thresh", type=float, default=0.44, help="Stage 2 probability refinement threshold")
     parser.add_argument("--min_area", type=int, default=180, help="Minimum pixel area for valid filament instances")
+    parser.add_argument("--max_spine_gap", type=float, default=35.0, help="Maximum pixel gap for collinear spine reconnection")
+    parser.add_argument("--max_spine_angle", type=float, default=25.0, help="Maximum angle for collinear spine reconnection")
     return parser.parse_args()
 
 
@@ -86,8 +88,8 @@ def main():
         sunspot_ecc_thresh=0.65,
         max_limb_r_ratio=0.965,
         enable_spine_reconnection=True,
-        max_spine_gap=50.0,
-        max_spine_angle=30.0,
+        max_spine_gap=args.max_spine_gap,
+        max_spine_angle=args.max_spine_angle,
         use_full_disk=True,
         yolo_imgsz=1280,
         context_factor=1.8,

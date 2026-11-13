@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Baseline (0.4618 Repro)",
+    "pq": 0.46263734081988117,
+    "sq": 0.6889377342891102,
+    "rq": 0.6715227193895248,
+    "tp": 968,
+    "fp": 376,
+    "fn": 571,
+    "total_preds": 780,
+    "elapsed_sec": 413.6,
+    "img_per_sec": 0.33
+  },
+  {
+    "name": "Puzzle 1: Fallback Guardrail",
+    "pq": 0.46263734081988117,
+    "sq": 0.6889377342891102,
+    "rq": 0.6715227193895248,
+    "tp": 968,
+    "fp": 376,
+    "fn": 571,
+    "total_preds": 780,
+    "elapsed_sec": 410.7,
+    "img_per_sec": 0.33
+  },
+  {
+    "name": "Puzzle 2: Precision tau=0.48",
+    "pq": 0.4610935837905436,
+    "sq": 0.6880752191101153,
+    "rq": 0.6701208981001727,
+    "tp": 970,
+    "fp": 386,
+    "fn": 569,
+    "total_preds": 786,
+    "elapsed_sec": 412.6,
+    "img_per_sec": 0.33
+  },
+  {
+    "name": "Puzzle 2b: Balanced (0.22, 0.42)",
+    "pq": 0.45839420749683574,
+    "sq": 0.6882865501848342,
+    "rq": 0.665993265993266,
+    "tp": 989,
+    "fp": 442,
+    "fn": 550,
+    "total_preds": 830,
+    "elapsed_sec": 421.6,
+    "img_per_sec": 0.32
+  },
+  {
+    "name": "Puzzle 3: Optical Edge Snapping",
+    "pq": 0.4110037861139142,
+    "sq": 0.6584308145436953,
+    "rq": 0.6242171189979123,
+    "tp": 897,
+    "fp": 438,
+    "fn": 642,
+    "total_preds": 773,
+    "elapsed_sec": 420.1,
+    "img_per_sec": 0.33
+  },
+  {
+    "name": "Puzzle 4: Tight Spine Reconnection",
+    "pq": 0.465502547682464,
+    "sq": 0.6889723290085549,
+    "rq": 0.6756476683937824,
+    "tp": 978,
+    "fp": 378,
+    "fn": 561,
+    "total_preds": 789,
+    "elapsed_sec": 404.3,
+    "img_per_sec": 0.34
+  },
+  {
+    "name": "Puzzle 5: Weighted Ensemble (0.65/0.35)",
+    "pq": 0.4644666062984215,
+    "sq": 0.6888235487036201,
+    "rq": 0.6742896742896742,
+    "tp": 973,
+    "fp": 374,
+    "fn": 566,
+    "total_preds": 783,
+    "elapsed_sec": 403.0,
+    "img_per_sec": 0.34
+  }
+]

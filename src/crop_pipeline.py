@@ -120,6 +120,7 @@ class TwoStageCropPipeline:
         fallback_to_stage1: bool = False,
         model_weights: Optional[List[float]] = None,
         crop_size: int = 256,
+        use_box_prompt: Optional[bool] = None,
     ):
         if crop_unet_model is None:
             self.unets = []
@@ -153,6 +154,17 @@ class TwoStageCropPipeline:
         self.yolo_imgsz = yolo_imgsz
         self.quad_imgsz = quad_imgsz
         self.fallback_to_stage1 = fallback_to_stage1
+        if use_box_prompt is not None:
+            self.use_box_prompt = use_box_prompt
+        else:
+            self.use_box_prompt = False
+            for m in self.unets:
+                enc = getattr(m, 'encoder', None)
+                if enc is not None:
+                    conv1 = getattr(enc, 'conv1', None) or getattr(enc, '_conv_stem', None)
+                    if conv1 is not None and getattr(conv1, 'in_channels', None) == 3:
+                        self.use_box_prompt = True
+                        break
 
     @torch.no_grad()
     def _predict_crop_with_tta(self, crop_two_ch: np.ndarray) -> np.ndarray:
@@ -363,7 +375,18 @@ class TwoStageCropPipeline:
             # Resize each channel to self.crop_size x self.crop_size for Stage 2 CropUNet
             ch0 = cv2.resize(two_ch[0, y0:y1, x0:x1], (self.crop_size, self.crop_size), interpolation=cv2.INTER_LINEAR)
             ch1 = cv2.resize(two_ch[1, y0:y1, x0:x1], (self.crop_size, self.crop_size), interpolation=cv2.INTER_LINEAR)
-            crop_input = np.stack([ch0, ch1], axis=-1)
+
+            if self.use_box_prompt:
+                rx0 = max(0, min(crop_w - 1, int(bbox[0] - x0)))
+                ry0 = max(0, min(crop_h - 1, int(bbox[1] - y0)))
+                rx1 = max(rx0 + 1, min(crop_w, int(bbox[0] + bbox[2] - x0)))
+                ry1 = max(ry0 + 1, min(crop_h, int(bbox[1] + bbox[3] - y0)))
+                prompt_native = np.zeros((crop_h, crop_w), dtype=np.float32)
+                prompt_native[ry0:ry1, rx0:rx1] = 1.0
+                ch2 = cv2.resize(prompt_native, (self.crop_size, self.crop_size), interpolation=cv2.INTER_LINEAR)
+                crop_input = np.stack([ch0, ch1, ch2], axis=-1)
+            else:
+                crop_input = np.stack([ch0, ch1], axis=-1)
 
             # Predict with Topology-Safe Flip-4 TTA (supports ensembling)
             crop_prob = self._predict_crop_with_tta(crop_input)

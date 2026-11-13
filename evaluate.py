@@ -35,6 +35,9 @@ def parse_args():
     parser.add_argument("--refine_thresh", type=float, default=0.44, help="Stage 2 probability refinement threshold")
     parser.add_argument("--min_area", type=int, default=180, help="Minimum pixel area for valid filament instances")
     parser.add_argument("--max_images", type=int, default=None, help="Optional subset of validation images for quick evaluation")
+    parser.add_argument("--fallback_to_stage1", action="store_true", help="Enable Stage 1 detector fallback guardrail")
+    parser.add_argument("--max_spine_gap", type=float, default=35.0, help="Maximum pixel gap for collinear spine reconnection")
+    parser.add_argument("--max_spine_angle", type=float, default=25.0, help="Maximum angle for collinear spine reconnection")
     return parser.parse_args()
 
 
@@ -56,6 +59,8 @@ def main():
     val_record_ids = sorted(split_data.get("val_record_ids", []))
     if args.max_images:
         val_filenames = val_filenames[:args.max_images]
+        stems = set(fn.rsplit(".", 1)[0] for fn in val_filenames)
+        val_record_ids = [rid for rid in val_record_ids if rid.rsplit("-", 1)[-1] in stems]
 
     parser = MAGFiLOParser(train_json, train_img_dir)
     gt_df = parser.build_gt_dataframe(val_record_ids)
@@ -91,12 +96,13 @@ def main():
         sunspot_ecc_thresh=0.65,
         max_limb_r_ratio=0.965,
         enable_spine_reconnection=True,
-        max_spine_gap=50.0,
-        max_spine_angle=30.0,
+        max_spine_gap=args.max_spine_gap,
+        max_spine_angle=args.max_spine_angle,
         use_full_disk=True,
         yolo_imgsz=1280,
         context_factor=1.8,
         crop_size=512,
+        fallback_to_stage1=args.fallback_to_stage1,
     )
 
     # 4. Run Evaluation Loop
