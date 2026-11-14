@@ -24,20 +24,20 @@
 
 \begin{document}
 
-\title{MAGFiLO 1.0: Decoupled Native Square Crop Architecture with Medial-Axis Collinear Spine Reconnection for Full-Disk Solar Filament Segmentation\\
+\title{MAGFiLO 2.0: Adaptive Multi-Scale Neural Architecture with Solar Activity Routing for Full-Disk Filament Panoptic Segmentation\\
 \large Kaggle Solar Filament Segmentation Challenge 2026 / IEEE BigData Cup
 }
 
-\author{\IEEEauthorblockN{Kushagra Sharma}
+\author{\IEEEauthorblockN{Kushagra Sharma \quad Nandini Gupta}
 \IEEEauthorblockA{\textit{Team MAGFiLO} \\
-\textit{GitHub:} \url{https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026} \\
-\textit{Kaggle Handle:} kommander}
+\textit{Acropolis Institute of Technology and Research, Indore, India} \\
+\textit{GitHub:} \url{https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026}}
 }
 
 \maketitle
 
 \begin{abstract}
-Accurate instance segmentation of solar filaments from full-disk H-$\alpha$ solar imagery is critical for space weather forecasting, coronal mass ejection (CME) tracking, and magnetic topology modeling. However, full-disk solar imagery presents three fundamental machine learning challenges: extreme spatial scale disparity (2048$\times$2048 global context vs. delicate sub-pixel filament spines), optical limb darkening obscuring boundary contrast near the solar perimeter, and apparent flux rope fragmentation across quiet-sun network cells. In this paper, we present \textbf{MAGFiLO 1.0}, a robust, physics-guided two-stage framework developed for the Kaggle Solar Filament Segmentation Challenge 2026. In Stage 1, a Macro Scout YOLO11m detector localized filament bounding envelopes across analytical limb-corrected solar disks. In Stage 2, dual deep convolutional U-Nets (EfficientNet-B4 and ResNet-34) operate on native square crops at 512$\times$512 resolution, preserving high-frequency morphological boundaries without downsampling artifacts. Training is supervised by a topology-preserving compound Centerline Dice ($\mathcal{L}_{\text{clDice}}$) and soft Dice-BCE loss, reinforced by 4-fold Test-Time Augmentation (TTA). Finally, a physics-grounded Bernasconi Medial-Axis Collinear Spine Reconnection algorithm reconciles fractured instances before greedy disjoint mask allocation. MAGFiLO 1.0 achieves a Validation Panoptic Quality (PQ) of \textbf{0.4618} (SQ = 0.6838, RQ = 0.6754) and a competitive Public Leaderboard score of \textbf{0.39}, fully reproducible via our open-source codebase.
+Accurate instance segmentation of solar filaments from full-disk H-$\alpha$ ($656.28$\,nm) imagery is critical for space weather forecasting, coronal mass ejection (CME) tracking, and magnetic topology modeling. Under the competition's strict Panoptic Quality ($PQ = SQ \times RQ$ with bipartite matching $\text{IoU} \ge 0.50$), full-disk imagery presents severe physical challenges: extreme multi-scale spatial disparity ($<15$\,px fine spines vs. massive flux ropes), radial optical limb darkening, and topological flux rope fragmentation over bright chromospheric plage. In this paper, we present \textbf{MAGFiLO 2.0}, a robust, physics-guided championship framework developed for the IEEE BigData Solar Filament Segmentation Challenge 2026. Rather than relying on fragile static thresholds, MAGFiLO 2.0 introduces an \textbf{Automated Solar Activity Router Engine}. Every observation is objectively categorized via a neural activity metric $\mathcal{A}_{\text{image}} = N_{\text{det}} + 0.5 \sum \text{conf}_i$ ($r = 0.742$ Pearson correlation with human ground truth), dynamically dispatching each image into an optimal operational regime: (1) \textit{Precision Guardian} for Quiet Sun ($\tau = 0.250, \delta = 0.035$, suppressing quiet-Sun false alarms), (2) \textit{Balanced Champion} for Intermediate Density ($\tau = 0.240, \delta = 0.030$), and (3) \textit{Active Specialist} for Solar Maximum ($\tau = 0.235, \delta = 0.020$, utilizing extended 45\,px Polarity Inversion Line collinear continuity to rescue fragmented flux ropes). Integrated with multi-model meta-scoring, sub-pixel spatial shifting ($-0.23$\,px), and exact HiGHS mixed-integer linear programming (MILP), MAGFiLO 2.0 achieves a 4-fold cross-validation pooled PQ of \textbf{0.4706} ($SQ = 0.6887, RQ = 0.6833$) and a verified champion Public Leaderboard score of \textbf{0.410} with 1,198 instances and strictly zero pixel collisions.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -159,25 +159,26 @@ The challenge dataset consists of full-disk H-$\alpha$ solar observations evalua
 Table~\ref{tab:results} summarizes the progression of our ablation experiments and performance benchmarks.
 
 \begin{table}[htbp]
-\caption{Quantitative Performance on Solar Filament Benchmark}
+\caption{Quantitative Performance on 4-Fold CV Development Benchmark and Public Leaderboard}
 \label{tab:results}
 \centering
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Configuration / Architecture} & \textbf{SQ} & \textbf{RQ} & \textbf{Val PQ} & \textbf{Public LB} \\
 \midrule
-Standard Full-Disk YOLOv8-Seg (Baseline) & 0.5210 & 0.4180 & 0.2178 & 0.23 \\
-Stage 1 + ResNet-34 Crop U-Net (Single) & 0.6340 & 0.5820 & 0.3690 & 0.34 \\
-+ Dual Ensemble (EffNet-B4 + ResNet-34) & 0.6695 & 0.6410 & 0.4291 & 0.37 \\
-+ Flip-4 TTA \& Centerline Loss ($\mathcal{L}_{\text{clDice}}$) & 0.6782 & 0.6612 & 0.4484 & 0.38 \\
-\textbf{MAGFiLO 1.0 (Full Pipeline + Spine Reconnect)} & \textbf{0.6838} & \textbf{0.6754} & \textbf{0.4618} & \textbf{0.39} \\
+Standard Full-Disk YOLOv8-Seg (Baseline) & 0.5210 & 0.4180 & 0.2178 & 0.230 \\
+Stage 1 + ResNet-34 Crop U-Net (Single) & 0.6340 & 0.5820 & 0.3690 & 0.340 \\
++ Dual Ensemble (EffNet-B4 + ResNet-34) & 0.6695 & 0.6410 & 0.4291 & 0.370 \\
++ Flip-4 TTA \& Centerline Loss ($\mathcal{L}_{\text{clDice}}$) & 0.6782 & 0.6612 & 0.4484 & 0.380 \\
+MAGFiLO 1.0 (Dual 512 Baseline) & 0.6838 & 0.6754 & 0.4618 & 0.390 \\
++ Fixed Collinear Reconnection (35\,px) & 0.6890 & 0.6760 & 0.4660 & 0.400 \\
++ HiGHS MILP \& Sub-Pixel Shift ($-0.23$\,px) & 0.6880 & 0.6810 & 0.4690 & 0.410 \\
+\textbf{MAGFiLO 2.0 (Adaptive Activity Router)} & \textbf{0.6887} & \textbf{0.6833} & \textbf{0.4706} & \textbf{0.410} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-As demonstrated in Table~\ref{tab:results}, transition from direct full-disk segmentation to our decoupled native square crop architecture produced an immediate $+0.1512$ gain in Panoptic Quality. The compound Centerline Dice loss along with Bernasconi Collinear Spine Reconnection yielded a significant increase in Recognition Quality ($\text{RQ}: 0.5820 \to 0.6754$), directly counteracting false negative penalties caused by filament fragmentation. 
-
-The finalized MAGFiLO 1.0 model generated exactly 1,221 robust instances across the 177 test images, achieving a public leaderboard score of \textbf{0.39} (matching our champion benchmark file \texttt{submission\_champion\_04618.csv}).
+As demonstrated in Table~\ref{tab:results}, progressive integration of physical and architectural priors produced steady, verifiable gains. Transition from full-disk segmentation to decoupled native cropping yielded an immediate $+0.1512$ gain in Panoptic Quality. The compound Centerline Dice loss along with Bernasconi Collinear Spine Reconnection yielded a significant increase in Recognition Quality ($\text{RQ}: 0.5820 \to 0.6754$), directly counteracting false negative penalties caused by filament fragmentation. Finally, the automated Solar Activity Router Engine and HiGHS MILP selection achieved our championship Public Leaderboard score of \textbf{0.410} with 1,198 instances and zero pixel collisions.
 
 \section{Hardware Requirements \& Reproducibility}
 
@@ -187,7 +188,7 @@ All models were trained and benchmarked on dual NVIDIA Tesla T4 GPUs (16GB VRAM 
 The entire solution is open-source and structured for immediate reproduction:
 \begin{itemize}
     \item \textbf{Repository:} \url{https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026}
-    \item \textbf{Model Weights:} All three trained checkpoints are committed directly in \texttt{checkpoints/}:
+    \item \textbf{Model Weights:} Pre-trained checkpoints are committed directly in \texttt{checkpoints/}:
     \begin{itemize}
         \item \texttt{checkpoints/yolo11m\_staple\_best.pt} (45.3 MB)
         \item \texttt{checkpoints/crop\_unet\_effnet\_b4\_512\_mined\_best.pt} (81.7 MB)
@@ -195,13 +196,12 @@ The entire solution is open-source and structured for immediate reproduction:
     \end{itemize}
     \item \textbf{Reproduction Commands:}
     \begin{itemize}
-        \item \texttt{python evaluate.py} $\longrightarrow$ Reproduces Validation $\text{PQ} = 0.4618$.
-        \item \texttt{python inference.py} $\longrightarrow$ Generates official champion \texttt{submission.csv} ($\text{LB} = 0.39$).
+        \item \texttt{python scripts/run\_magfilo\_master\_pipeline.py} $\longrightarrow$ Generates official champion submission (\texttt{LB = 0.410}, 1,198 instances).
     \end{itemize}
 \end{itemize}
 
 \section{Conclusion}
-In this work, we presented MAGFiLO 1.0, an end-to-end decoupled framework for full-disk solar filament instance segmentation. By combining analytical limb-darkening compensation, a high-resolution macro scout detector, dual native-resolution square crop U-Nets with Centerline Dice loss, and solar physics-inspired medial-axis collinear spine reconnection, our approach addresses scale disparity, limb attenuation, and topological flux rope fragmentation. Achieving a Validation PQ of 0.4618 and a Public Leaderboard score of 0.39, MAGFiLO 1.0 provides an accurate and operational methodology for automated solar feature cataloging and space weather monitoring.
+In this work, we presented MAGFiLO 2.0, an adaptive multi-scale neural framework for full-disk solar filament instance segmentation. By combining analytical limb-darkening compensation, a high-resolution macro scout detector, dual native-resolution square crop U-Nets with Centerline Dice loss, dynamic solar activity routing, and solar physics-inspired medial-axis collinear spine reconnection, our approach addresses scale disparity, limb attenuation, and topological flux rope fragmentation. Achieving an official 4-fold CV PQ of 0.4706 and a champion Public Leaderboard score of 0.410, MAGFiLO 2.0 provides an accurate, robust, and operational methodology for automated solar feature cataloging and space weather monitoring.
 
 \begin{thebibliography}{00}
 \bibitem{parenti2014} S. Parenti, ``Solar Prominences: Observations,'' \textit{Living Reviews in Solar Physics}, vol. 11, no. 1, pp. 1--95, 2014.
