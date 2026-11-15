@@ -357,7 +357,7 @@ class GenuineSolarPipeline:
         final_instances = disjoint_merge_instances(candidate_masks, candidate_scores, min_area=self.min_area)
         return final_instances
 
-    def run_directory(self, image_dir: str, output_csv: str) -> pd.DataFrame:
+    def run_directory(self, image_dir: str, output_csv: Optional[str] = None) -> pd.DataFrame:
         """
         Runs batch inference across an entire directory of GONG H-alpha images.
         """
@@ -386,9 +386,16 @@ class GenuineSolarPipeline:
                 print(f"  [{idx}/{len(files)}] {el:.1f}s ({idx/el:.2f} img/s) -> Instances: {len(out_rows)}", flush=True)
 
         df = pd.DataFrame(out_rows)
-        df.to_csv(output_csv, index=False)
-        print(f"[Done] Written {len(df)} instances to {output_csv} in {time.time()-t0:.1f}s.")
+        if output_csv is not None:
+            df.to_csv(output_csv, index=False)
+            print(f"[Done] Written {len(df)} instances to {output_csv} in {time.time()-t0:.1f}s.")
+        else:
+            print(f"[Done] Processed {len(files)} images -> {len(df)} instances in {time.time()-t0:.1f}s.")
         return df
+
+    # Aliases for flexible programmatic usage
+    predict_image = process_image
+    predict_image_dir = run_directory
 
 
 def parse_args():
