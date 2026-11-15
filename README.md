@@ -130,11 +130,19 @@ This automated audit decodes all 1,199 predicted RLE masks at $2048 \times 2048$
   06F249E28F846FF56738E65BB9B9AAFCE543E61D15DB71A292EBBE2A83553CED
   ```
 
+### E. Interactive Jury Demonstration Notebook
+Reviewers and competition judges can inspect and run the official interactive demonstration notebook:
+```bash
+jupyter notebook MAGFiLO_2_0_JURY_SUBMISSION_NOTEBOOK.ipynb
+```
+Contains full step-by-step pipeline execution, visual verification with full-disk observations, and the automated IEEE BigData compliance audit suite.
+
 ---
 
 ## 6. Repository Structure
 
 ```
+├── MAGFiLO_2_0_JURY_SUBMISSION_NOTEBOOK.ipynb # Official IEEE BigData demonstration notebook
 ├── figures/
 │   ├── pipeline.png                  # Figure 1: 300 DPI 8-stage architecture workflow
 │   └── segmentation_examples.png     # Figure 2: Qualitative segmentation results on 20110312082634Lh

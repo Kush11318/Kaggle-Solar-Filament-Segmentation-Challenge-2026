@@ -40,7 +40,7 @@ submission_*.csv
 
 # Exploration notebooks and retrospective logs
 *.ipynb
-!MAGFiLO_1_0_JURY_SUBMISSION_NOTEBOOK.ipynb
+!MAGFiLO_2_0_JURY_SUBMISSION_NOTEBOOK.ipynb
 COMPREHENSIVE_PROJECT_RETROSPECTIVE_AND_MODEL_INVENTORY.md
 LEADERBOARD_EXPERIMENTS.md
 train_advanced.py
