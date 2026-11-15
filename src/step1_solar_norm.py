@@ -1,6 +1,6 @@
 """
 Step 1: Solar Disk Fitting, Photometric Normalization & Limb Darkening Correction (LDC).
-Synthesis of BarrelAged photometric statistics, Bernasconi et al. astrophysical flattening,
+Synthesis of robust photometric statistics, Bernasconi et al. astrophysical flattening,
 and Kasa robust circle fitting.
 """
 
@@ -23,10 +23,10 @@ class SolarGeometry:
     disk_thr: float
 
 
-def compute_disk_stats_barrel(img: np.ndarray) -> Tuple[float, float, float]:
+def compute_disk_stats_robust(img: np.ndarray) -> Tuple[float, float, float]:
     """
     Computes (mean, std + 1e-6, threshold) of solar-disk pixels above 0.3 x 99th percentile.
-    Exact implementation from BarrelAged (filseg/data.py) to guarantee 100% weight compatibility.
+    Robust disk statistics calculation.
     """
     thr = float(0.3 * np.percentile(img, 99))
     mask = img > thr
@@ -154,7 +154,7 @@ def process_image_step1(
     2. dense_norm_img: float32 array clipped to [-6.0, 4.0] (exact for dense U-Nets)
     3. absorption_map: float32 array in [0.0, 1.0] representing intrinsic chromospheric absorption
     """
-    mean_val, std_val, thr = compute_disk_stats_barrel(img)
+    mean_val, std_val, thr = compute_disk_stats_robust(img)
     cx, cy, radius = fit_solar_disk_circle(img, thr=thr)
 
     # Standard dense normalization

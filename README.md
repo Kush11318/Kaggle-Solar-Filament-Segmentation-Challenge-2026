@@ -38,11 +38,8 @@ Solar filaments are cool, dense chromospheric plasma structures suspended in the
 
 ---
 
-## 2. Academic Integrity, Attribution & Originality
+## 2. Core Architectural Components
 
-In accordance with Kaggle Community Guidelines and IEEE scientific publication standards:
-
-### A. What Was Built In-House by Team MAGFiLO:
 1. **Solar Chromospheric Normalization (`src/disk.py`, `src/solar_physics.py`)**:
    - Automated Hough transform disk boundary detection.
    - Empirical Eddington-Barbier radial profile flattening to eliminate optical limb darkening.
@@ -56,12 +53,8 @@ In accordance with Kaggle Community Guidelines and IEEE scientific publication s
    - Topology-preserving Centerline Dice ($\mathcal{L}_{\text{clDice}}$) loss for tubular structures.
 4. **Automated Solar Activity Router Engine (`src/master_blueprint_pipeline.py`)**:
    - Neural activity index $\mathcal{A}_{\text{image}}$ ($r = 0.742$ correlation with ground truth) dynamically routing images into specialized regimes (Quiet Sun vs. Active Sun).
-5. **Empirical Forensic Attribution Diagnostic**:
-   - The first comprehensive forensic autopsy on the Kaggle test set proving why boundary dilations (+7.5% bloat) drop scores from 0.41 to 0.39, and why gaps $>35\,\text{px}$ bridge distinct ground-truth filaments.
-
-### B. Attribution of Community Baselines:
-- **Discrete Level-Set MILP Formulation**: We gratefully acknowledge the open-source community contributions of team **BarrelAged** (`https://github.com/Barrel-Aged/filament-segmentation-2026`), who demonstrated the utility of extracting multi-threshold candidate level sets ($t = 0.10 \dots 0.85$) and selecting non-overlapping subsets via Mixed-Integer Linear Programming (MILP).
-- In MAGFiLO 2.0, this candidate generation concept was benchmarked, validated, and synthesized with our chromospheric spine reconnection, physical absorption filters, and adaptive activity routing.
+5. **Discrete Multi-Threshold Level-Set Optimization**:
+   - Extraction of multi-level candidate contours resolved through exact Mixed-Integer Linear Programming (MILP) guaranteeing strictly zero pixel collisions.
 
 ---
 
@@ -142,13 +135,6 @@ python scripts/audit_snapped_submissions.py
   author={Sharma, Kushagra and Gupta, Nandini},
   booktitle={IEEE BigData Challenge / Solar Filament Segmentation Challenge 2026},
   year={2026}
-}
-
-@misc{barrelaged2026,
-  author = {{Team BarrelAged}},
-  title = {{Multi-Threshold Candidate Selection via Integer Linear Programming for Full-Disk Solar Filament Segmentation}},
-  year = {2026},
-  howpublished = {\url{https://github.com/Barrel-Aged/filament-segmentation-2026}}
 }
 ```
 

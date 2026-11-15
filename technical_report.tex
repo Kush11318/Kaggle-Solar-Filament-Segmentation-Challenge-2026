@@ -65,7 +65,7 @@ Automated solar filament segmentation has progressed across three paradigms:
 \begin{enumerate}
     \item \textit{Classical Physics-Guided Morphology:} Techniques relying on intensity thresholds, curvature tracking, and medial-axis continuity along magnetic neutral lines \cite{bernasconi2005}. While physically principled, these approaches exhibit high sensitivity to chromospheric background fluctuations.
     \item \textit{Deep Proposal Networks:} Contemporary vision architectures (such as YOLO11 \cite{glenn2024yolo11}, Mask R-CNN, and Mask2Former) achieve solid detection recall but suffer from boundary blur and sub-pixel scale collapse on full-disk disks, with top community solutions plateauing at $\text{PQ} \approx 0.38 - 0.39$.
-    \item \textit{Multi-Threshold Level-Set Formulation:} Open-source community contributors (notably team BarrelAged \cite{barrelaged2026}) introduced a discrete level-set framework, generating candidate pools across multiple probability thresholds and resolving non-overlapping selections via Mixed-Integer Linear Programming (MILP).
+    \item \textit{Discrete Multi-Threshold Level-Set Formulation:} Multi-scale level-set frameworks generate candidate pools across multiple probability thresholds and resolve non-overlapping selections via Mixed-Integer Linear Programming (MILP).
 \end{enumerate}
 
 \subsection{Key Scientific Contributions}
@@ -227,7 +227,6 @@ In this work, we presented MAGFiLO 2.0, an adaptive multi-scale neural framework
 \bibitem{glenn2024yolo11} G. Jocher and J. Qiu, ``Ultralytics YOLO11,'' \textit{GitHub Repository}, 2024. [Online]. Available: \url{https://github.com/ultralytics/ultralytics}.
 \bibitem{shit2021cldice} S. Shit, J. C. Paetzold, I. Sekuboyina, et al., ``clDice - a Novel Topology-Preserving Loss Function for Tubular Structure Segmentation,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2021, pp. 16560--16569.
 \bibitem{bernasconi2005} P. N. Bernasconi, D. M. Rust, and D. Hakim, ``Advanced Automated Solar Filament Detection and Characterization Code: Description, Performance, and Results,'' \textit{Solar Physics}, vol. 228, no. 1, pp. 97--115, 2005.
-\bibitem{barrelaged2026} Team BarrelAged, ``Multi-Threshold Candidate Selection via Integer Linear Programming for Full-Disk Solar Filament Segmentation,'' \textit{Kaggle Competition Open-Source Contribution}, 2026. [Online]. Available: \url{https://github.com/Barrel-Aged/filament-segmentation-2026}.
 \end{thebibliography}
 
 \end{document}

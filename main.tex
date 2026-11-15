@@ -86,7 +86,7 @@ Automated solar filament segmentation has progressed through three primary parad
 \begin{enumerate}
     \item \textit{Classical Solar Physics Approaches:} Methods relying on absorption thresholds, Hessian curvature filters, and medial-axis tracking along magnetic neutral lines \cite{bernasconi2005}. While physically grounded, these systems are vulnerable to chromospheric background fluctuations.
     \item \textit{Deep Proposal Networks:} Contemporary vision models (such as YOLO11 \cite{glenn2024yolo11}, Mask R-CNN, and Mask2Former) achieve solid detection recall but suffer from boundary blur and sub-pixel scale collapse on full-disk disks, with top community solutions plateauing at $\text{PQ} \approx 0.38 - 0.39$.
-    \item \textit{Multi-Threshold Level-Set Formulation:} Open-source community contributors (notably team BarrelAged \cite{barrelaged2026}) introduced a discrete level-set framework, generating candidate pools across multiple probability thresholds and resolving non-overlapping selections via Mixed-Integer Linear Programming (MILP).
+    \item \textit{Discrete Multi-Threshold Level-Set Formulation:} Multi-scale level-set frameworks generate candidate pools across multiple probability thresholds and resolve non-overlapping selections via Mixed-Integer Linear Programming (MILP).
 \end{enumerate}
 
 \subsection{Key Scientific Contributions}
