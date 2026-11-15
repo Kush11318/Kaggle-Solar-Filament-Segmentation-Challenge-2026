@@ -101,13 +101,11 @@ k_spine = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
 k_dil = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 
 # Map filename -> list of record IDs (some images have multiple annotator records)
-filename_to_records = {}
-for r in split_data.get('val_record_ids', []):
-    rec_info = parser.get_record_by_id(r)
-    if rec_info:
-        fn = rec_info.get('file_name', '')
-        if fn:
-            filename_to_records.setdefault(fn, []).append(r)
+filename_to_records = {
+    fn: [r['id'] for r in recs if r['id'] in val_record_ids]
+    for fn, recs in parser.records_by_filename.items()
+    if fn in val_filenames
+}
 
 pred_rows = []
 t0 = time.time()
