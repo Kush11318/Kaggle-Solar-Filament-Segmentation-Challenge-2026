@@ -79,7 +79,25 @@ Guide mode is on.}
         \item \textbf{Topological Fragmentation and PQ FN Penalty:} Solar magnetic flux ropes often appear discontinuous across bright chromospheric network cells. Under the competition's PQ metric, missed filament segments or fragmented predictions incur severe false negative (FN) penalties in the denominator ($+0.5\times\text{FN}$).
     \end{itemize}
 
-    To overcome these limitations, we designed \textbf{MAGFiLO 1.0}, a two-stage decoupled architecture combining analytical limb correction, multi-scale candidate localization, dual native-resolution square crop U-Nets with Centerline Dice loss, and medial-axis collinear spine reconnection.
+    To overcome these limitations, we designed \textbf{MAGFiLO 2.0}, an adaptive multi-scale architecture integrating physical chromospheric normalization, decoupled native crop refinement, automated solar activity routing, and medial-axis collinear spine reconnection.
+
+\subsection{Related Work and Community Baselines}
+Automated solar filament segmentation has progressed through three primary paradigms:
+\begin{enumerate}
+    \item \textit{Classical Solar Physics Approaches:} Methods relying on absorption thresholds, Hessian curvature filters, and medial-axis tracking along magnetic neutral lines \cite{bernasconi2005}. While physically grounded, these systems are vulnerable to chromospheric background fluctuations.
+    \item \textit{Deep Proposal Networks:} Contemporary vision models (such as YOLO11 \cite{glenn2024yolo11}, Mask R-CNN, and Mask2Former) achieve solid detection recall but suffer from boundary blur and sub-pixel scale collapse on full-disk disks, with top community solutions plateauing at $\text{PQ} \approx 0.38 - 0.39$.
+    \item \textit{Multi-Threshold Level-Set Formulation:} Open-source community contributors (notably team BarrelAged \cite{barrelaged2026}) introduced a discrete level-set framework, generating candidate pools across multiple probability thresholds and resolving non-overlapping selections via Mixed-Integer Linear Programming (MILP).
+\end{enumerate}
+
+\subsection{Key Scientific Contributions}
+MAGFiLO 2.0 synthesizes and substantially extends beyond prior work through the following distinct contributions:
+\begin{itemize}
+    \item \textbf{Analytical Solar Chromospheric Normalization:} Empirical Eddington-Barbier radial profile flattening coupled with dark absorption trench snapping, eliminating peripheral limb attenuation.
+    \item \textbf{Collinear Medial-Axis Spine Reconnection:} A differential geometry algorithm leveraging Zhang-Suen skeletonization and terminal tangent vectors ($\text{dist} \le 35\,\text{px}, \theta \le 30^\circ$) to reconnect physically fragmented flux ropes along Polarity Inversion Lines without artificial parallel filament bridging.
+    \item \textbf{Decoupled Native-Resolution Crop Refinement:} A dual-backbone ensemble (EfficientNet-B4 + ResNet-34) optimized under Centerline Dice ($\mathcal{L}_{\text{clDice}}$) loss to recover high-frequency transverse barbs.
+    \item \textbf{Automated Solar Activity Router Engine:} Dynamic categorization of solar disks into operational regimes based on objective activity metrics, adapting candidate acceptance and continuity parameters across the solar cycle.
+    \item \textbf{Forensic Boundary Attribution Diagnostic:} The first systematic empirical study characterizing the strict mathematical boundary sensitivity between 0.410, 0.400, and 0.390 Panoptic Quality regimes on full-disk H-$\alpha$ observations.
+\end{itemize}
 
 % ==================================== %
 %              METHODOLOGY             %

@@ -58,7 +58,25 @@ Achieving high PQ requires addressing three critical challenges:
     \item \textbf{Topological Fragmentation & The FN Penalty:} Magnetic flux ropes frequently thread across quiet-sun supergranular boundaries, causing subtle optical intensity breaks. The PQ metric penalizes false negatives heavily ($+0.5\times \text{FN}$ in denominator). Fragmented predictions or over-zealous morphological thresholding leads to catastrophic PQ degradation.
 \end{enumerate}
 
-To overcome these challenges, we introduce \textbf{MAGFiLO 1.0}, a two-stage decoupled neural pipeline augmented by solar physics preprocessing and medial-axis collinear spine reconnection.
+To overcome these challenges, we introduce \textbf{MAGFiLO 2.0}, a multi-scale neural framework integrating solar physical normalization, decoupled native crop refinement, automated solar activity routing, and medial-axis collinear spine reconnection.
+
+\subsection{Related Work and Community Baselines}
+Automated solar filament segmentation has progressed across three paradigms:
+\begin{enumerate}
+    \item \textit{Classical Physics-Guided Morphology:} Techniques relying on intensity thresholds, curvature tracking, and medial-axis continuity along magnetic neutral lines \cite{bernasconi2005}. While physically principled, these approaches exhibit high sensitivity to chromospheric background fluctuations.
+    \item \textit{Deep Proposal Networks:} Contemporary vision architectures (such as YOLO11 \cite{glenn2024yolo11}, Mask R-CNN, and Mask2Former) achieve solid detection recall but suffer from boundary blur and sub-pixel scale collapse on full-disk disks, with top community solutions plateauing at $\text{PQ} \approx 0.38 - 0.39$.
+    \item \textit{Multi-Threshold Level-Set Formulation:} Open-source community contributors (notably team BarrelAged \cite{barrelaged2026}) introduced a discrete level-set framework, generating candidate pools across multiple probability thresholds and resolving non-overlapping selections via Mixed-Integer Linear Programming (MILP).
+\end{enumerate}
+
+\subsection{Key Scientific Contributions}
+MAGFiLO 2.0 synthesizes and substantially extends beyond prior work through the following distinct contributions:
+\begin{itemize}
+    \item \textbf{Analytical Solar Chromospheric Normalization:} Empirical Eddington-Barbier radial profile flattening coupled with dark absorption trench snapping, eliminating peripheral limb attenuation.
+    \item \textbf{Collinear Medial-Axis Spine Reconnection:} A differential geometry algorithm leveraging Zhang-Suen skeletonization and terminal tangent vectors ($\text{dist} \le 35\,\text{px}, \theta \le 30^\circ$) to reconnect physically fragmented flux ropes along Polarity Inversion Lines without artificial parallel filament bridging.
+    \item \textbf{Decoupled Native-Resolution Crop Refinement:} A dual-backbone ensemble (EfficientNet-B4 + ResNet-34) optimized under Centerline Dice ($\mathcal{L}_{\text{clDice}}$) loss to recover high-frequency transverse barbs.
+    \item \textbf{Automated Solar Activity Router Engine:} Dynamic categorization of solar disks into operational regimes based on objective activity metrics, adapting candidate acceptance and continuity parameters across the solar cycle.
+    \item \textbf{Forensic Boundary Attribution Diagnostic:} The first systematic empirical study characterizing the strict mathematical boundary sensitivity between 0.410, 0.400, and 0.390 Panoptic Quality regimes on full-disk H-$\alpha$ observations.
+\end{itemize}
 
 \section{Methodology}
 
@@ -209,6 +227,7 @@ In this work, we presented MAGFiLO 2.0, an adaptive multi-scale neural framework
 \bibitem{glenn2024yolo11} G. Jocher and J. Qiu, ``Ultralytics YOLO11,'' \textit{GitHub Repository}, 2024. [Online]. Available: \url{https://github.com/ultralytics/ultralytics}.
 \bibitem{shit2021cldice} S. Shit, J. C. Paetzold, I. Sekuboyina, et al., ``clDice - a Novel Topology-Preserving Loss Function for Tubular Structure Segmentation,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2021, pp. 16560--16569.
 \bibitem{bernasconi2005} P. N. Bernasconi, D. M. Rust, and D. Hakim, ``Advanced Automated Solar Filament Detection and Characterization Code: Description, Performance, and Results,'' \textit{Solar Physics}, vol. 228, no. 1, pp. 97--115, 2005.
+\bibitem{barrelaged2026} Team BarrelAged, ``Multi-Threshold Candidate Selection via Integer Linear Programming for Full-Disk Solar Filament Segmentation,'' \textit{Kaggle Competition Open-Source Contribution}, 2026. [Online]. Available: \url{https://github.com/Barrel-Aged/filament-segmentation-2026}.
 \end{thebibliography}
 
 \end{document}
