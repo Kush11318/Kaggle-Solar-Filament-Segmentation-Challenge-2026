@@ -67,8 +67,8 @@ class GenuineSolarPipeline:
     def __init__(
         self,
         yolo_path: str = "checkpoints/yolo11m_staple_best.pt",
-        b4_path: str = "checkpoints/crop_unet_effnet_b4_512_mined_best.pt",
-        r34_path: str = "checkpoints/crop_unet_resnet34_512_mined_best.pt",
+        b4_path: str = "checkpoints/crop_unet_efficientnet_b4_512_cldice_best.pt",
+        r34_path: Optional[str] = None,
         device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
         det_conf: float = 0.21,
         tau_core: float = 0.58,
@@ -77,14 +77,14 @@ class GenuineSolarPipeline:
         min_core_pixels: int = 20,
         min_inst_prob: float = 0.45,
         allow_fallback: bool = False,
-        enable_barb_dilation: bool = True,
-        barb_dilation_radius: int = 1,
-        context_factor: float = 1.5,
+        enable_barb_dilation: bool = False,
+        barb_dilation_radius: int = 0,
+        context_factor: float = 1.6,
         crop_size: int = 512,
         enable_ldc: bool = True,
         enable_shift: bool = True,
         shift_dy: float = -0.23,
-        enable_absorption_snapping: bool = True,
+        enable_absorption_snapping: bool = False,
         absorption_threshold: int = 138,
     ):
         self.device = torch.device(device)
@@ -105,34 +105,35 @@ class GenuineSolarPipeline:
         self.enable_absorption_snapping = enable_absorption_snapping
         self.absorption_threshold = absorption_threshold
 
-        print(f"[Init] Initializing Upgraded Genuine Solar Pipeline on {self.device}...")
+        print(f"[Init] Initializing Upgraded Genuine Solar Pipeline with Soft-clDice Backbone on {self.device}...")
 
         # 1. Load Stage 1 Global Detector
         print(f"[Init] Loading YOLO11m Detector from {yolo_path}...")
         self.yolo = YOLO(yolo_path)
 
-        # 2. Load Stage 2 Box-Prompted CropUNet Models
-        print(f"[Init] Loading EffNet-B4 Refiner from {b4_path}...")
-        self.m_b4 = smp.Unet("efficientnet-b4", encoder_weights=None, in_channels=2, classes=1, activation=None).to(self.device)
+        # 2. Load Stage 2 3-Channel Box-Prompted CropUNet (Soft-clDice Backbone)
+        print(f"[Init] Loading clDice-Trained EffNet-B4 Refiner from {b4_path}...")
+        self.m_b4 = smp.Unet("efficientnet-b4", encoder_weights=None, in_channels=3, classes=1, activation=None).to(self.device)
         if os.path.exists(b4_path):
             c_b4 = torch.load(b4_path, map_location=self.device, weights_only=False)
             self.m_b4.load_state_dict(c_b4.get("model_state_dict", c_b4))
         self.m_b4.eval()
 
-        print(f"[Init] Loading ResNet-34 Refiner from {r34_path}...")
-        self.m_r34 = smp.Unet("resnet34", encoder_weights=None, in_channels=2, classes=1, activation=None).to(self.device)
-        if os.path.exists(r34_path):
+        self.m_r34 = None
+        if r34_path and os.path.exists(r34_path):
+            print(f"[Init] Loading ResNet-34 Refiner from {r34_path}...")
+            self.m_r34 = smp.Unet("resnet34", encoder_weights=None, in_channels=3, classes=1, activation=None).to(self.device)
             c_r34 = torch.load(r34_path, map_location=self.device, weights_only=False)
             self.m_r34.load_state_dict(c_r34.get("model_state_dict", c_r34))
-        self.m_r34.eval()
+            self.m_r34.eval()
 
-        print("[Init] Multi-backbone logit-space ensemble successfully loaded into memory.")
+        print("[Init] Soft-clDice neural refiner successfully loaded into memory.")
 
     @torch.no_grad()
     def _predict_crop_logit_ensemble(self, crop_input: np.ndarray) -> np.ndarray:
         """
-        Executes Flip-4 Test-Time Augmentation (TTA) with 60% EffNet-B4 + 40% ResNet-34 in logit space.
-        crop_input shape: (H, W, 2)
+        Executes Flip-4 Test-Time Augmentation (TTA) with clDice EffNet-B4 in logit space.
+        crop_input shape: (H, W, 3)
         """
         t = torch.from_numpy(crop_input.transpose(2, 0, 1)).unsqueeze(0).to(self.device)
         
@@ -145,8 +146,11 @@ class GenuineSolarPipeline:
             
             # Predict raw uncompressed log-odds (logits)
             l_b4 = self.m_b4(t_aug)
-            l_r34 = self.m_r34(t_aug)
-            l_ens = 0.60 * l_b4 + 0.40 * l_r34
+            if self.m_r34 is not None:
+                l_r34 = self.m_r34(t_aug)
+                l_ens = 0.60 * l_b4 + 0.40 * l_r34
+            else:
+                l_ens = l_b4
             p_aug = torch.sigmoid(l_ens)
 
             if flip:
@@ -234,10 +238,20 @@ class GenuineSolarPipeline:
             if crop_h < 16 or crop_w < 16:
                 continue
 
-            # Resize 2-channel normalized input
+            # Resize 3-channel normalized input (Raw H-alpha, Limb-Flattened, Target Box Prompt)
             ch0 = cv2.resize(two_ch[0, y0:y1, x0:x1], (self.crop_size, self.crop_size), interpolation=cv2.INTER_LINEAR)
             ch1 = cv2.resize(two_ch[1, y0:y1, x0:x1], (self.crop_size, self.crop_size), interpolation=cv2.INTER_LINEAR)
-            crop_input = np.stack([ch0, ch1], axis=-1)
+
+            rx0 = max(0, min(crop_w - 1, int(bbox[0] - x0)))
+            ry0 = max(0, min(crop_h - 1, int(bbox[1] - y0)))
+            rx1 = max(rx0 + 1, min(crop_w, int(bbox[0] + bbox[2] - x0)))
+            ry1 = max(ry0 + 1, min(crop_h, int(bbox[1] + bbox[3] - y0)))
+
+            box_native = np.zeros((crop_h, crop_w), dtype=np.float32)
+            box_native[ry0:ry1, rx0:rx1] = 1.0
+            ch2 = cv2.resize(box_native, (self.crop_size, self.crop_size), interpolation=cv2.INTER_LINEAR)
+
+            crop_input = np.stack([ch0, ch1, ch2], axis=-1)
 
             # Logit-space neural ensemble prediction
             crop_prob = self._predict_crop_logit_ensemble(crop_input)
@@ -410,20 +424,20 @@ def parse_args():
     parser.add_argument("--image_dir", type=str, required=True, help="Directory containing raw full-disk H-alpha images")
     parser.add_argument("--output_csv", type=str, default="submission_genuine.csv", help="Output submission CSV path")
     parser.add_argument("--yolo_path", type=str, default="checkpoints/yolo11m_staple_best.pt", help="Path to YOLO weights")
-    parser.add_argument("--b4_path", type=str, default="checkpoints/crop_unet_effnet_b4_512_mined_best.pt", help="Path to EffNet-B4 weights")
-    parser.add_argument("--r34_path", type=str, default="checkpoints/crop_unet_resnet34_512_mined_best.pt", help="Path to ResNet-34 weights")
+    parser.add_argument("--b4_path", type=str, default="checkpoints/crop_unet_efficientnet_b4_512_cldice_best.pt", help="Path to EffNet-B4 clDice weights")
+    parser.add_argument("--r34_path", type=str, default=None, help="Path to ResNet-34 weights (optional)")
     parser.add_argument("--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu", help="Device (cuda:0 or cpu)")
-    parser.add_argument("--det_conf", type=float, default=0.21, help="YOLO detection confidence threshold")
-    parser.add_argument("--tau_core", type=float, default=0.58, help="Core high-confidence threshold")
-    parser.add_argument("--tau_support", type=float, default=0.34, help="Support low-threshold for propagation")
-    parser.add_argument("--min_area", type=int, default=150, help="Minimum filament area in pixels")
-    parser.add_argument("--min_core_pixels", type=int, default=20, help="Minimum core pixels in candidate")
-    parser.add_argument("--min_inst_prob", type=float, default=0.45, help="Minimum instance mean probability")
+    parser.add_argument("--det_conf", type=float, default=0.20, help="YOLO detection confidence threshold")
+    parser.add_argument("--tau_core", type=float, default=0.55, help="Core high-confidence threshold")
+    parser.add_argument("--tau_support", type=float, default=0.35, help="Support low-threshold for propagation")
+    parser.add_argument("--min_area", type=int, default=120, help="Minimum filament area in pixels")
+    parser.add_argument("--min_core_pixels", type=int, default=15, help="Minimum core pixels in candidate")
+    parser.add_argument("--min_inst_prob", type=float, default=0.40, help="Minimum instance mean probability")
     parser.add_argument("--allow_fallback", action="store_true", help="Allow fallback to stage 1 mask")
-    parser.add_argument("--disable_barb_dilation", action="store_true", help="Disable barb dilation")
-    parser.add_argument("--barb_dilation_radius", type=int, default=1, help="Radius of barb dilation kernel")
+    parser.add_argument("--disable_barb_dilation", action="store_true", default=True, help="Disable barb dilation")
+    parser.add_argument("--barb_dilation_radius", type=int, default=0, help="Radius of barb dilation kernel")
     parser.add_argument("--absorption_threshold", type=int, default=138, help="Threshold for physical absorption fringe snapping")
-    parser.add_argument("--disable_absorption_snapping", action="store_true", help="Disable absorption fringe snapping")
+    parser.add_argument("--disable_absorption_snapping", action="store_true", default=True, help="Disable absorption fringe snapping")
     return parser.parse_args()
 
 

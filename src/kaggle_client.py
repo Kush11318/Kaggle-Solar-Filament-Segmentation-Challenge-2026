@@ -12,11 +12,11 @@ import websocket
 
 
 class KaggleKernelClient:
-    def __init__(self, proxy_base_url: str):
+    def __init__(self, proxy_base_url: str, kernel_id: Optional[str] = None):
         self.base_url = proxy_base_url.rstrip("/")
         # Convert https:// to wss:// for websocket
         self.ws_base_url = self.base_url.replace("https://", "wss://").replace("http://", "ws://")
-        self.kernel_id = self._get_active_kernel_id()
+        self.kernel_id = kernel_id if kernel_id else self._get_active_kernel_id()
 
     def _get_active_kernel_id(self) -> str:
         ctx = ssl.create_default_context()
