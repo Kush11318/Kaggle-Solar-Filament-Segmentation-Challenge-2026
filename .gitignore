@@ -33,6 +33,7 @@ scripts/*
 !scripts/generate_truly_unique_crops_figure.py
 !scripts/run_magfilo_master_pipeline.py
 !scripts/run_quadrant_coremantle_transformer_pipeline.py
+!scripts/run_transformer_pipeline_gpu.py
 
 # Track only official champion submissions
 submissions/*
