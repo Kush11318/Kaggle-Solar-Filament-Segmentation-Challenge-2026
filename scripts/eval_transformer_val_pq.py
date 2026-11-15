@@ -232,21 +232,20 @@ for idx, fn in enumerate(val_filenames, 1):
             
     disjoint_instances = disjoint_merge_instances(shifted_masks, shifted_scores, min_area=150)
     
-    # Broadcast predictions to all annotator records for this image
-    associated_records = filename_to_records.get(fn, [fn.split('.')[0]])
-    for rec_id in associated_records:
-        for inst_idx, (m, s) in enumerate(disjoint_instances, 1):
-            rle = mask_util.encode(np.asfortranarray(m.astype(np.uint8)))["counts"].decode("utf-8")
-            pred_rows.append({
-                "filament_id": f"{rec_id}_{inst_idx}",
-                "segmentation_rle": rle
-            })
+    stem = os.path.splitext(fn)[0]
+    for inst_idx, (m, s) in enumerate(disjoint_instances, 1):
+        rle = mask_util.encode(np.asfortranarray(m.astype(np.uint8)))["counts"].decode("utf-8")
+        pred_rows.append({
+            "filament_id": f"{stem}_{inst_idx}",
+            "segmentation_rle": rle
+        })
             
     if idx % 25 == 0 or idx == len(val_filenames):
         print(f"Evaluated [{idx}/{len(val_filenames)}] images ({time.time()-t0:.1f}s)...", flush=True)
 
 pred_df = pd.DataFrame(pred_rows)
-print(f"\n[Inference Done] Total predictions: {len(pred_df)} instances.", flush=True)
+pred_df.to_csv('/kaggle/working/val_predictions_transformer.csv', index=False)
+print(f"\n[Inference Done] Total predictions: {len(pred_df)} instances across {pred_df['filament_id'].apply(lambda s: s.split('_')[0]).nunique()} images.", flush=True)
 
 # 5. Compute Panoptic Quality Metrics
 print("\n" + "=" * 80)
