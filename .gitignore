@@ -34,6 +34,9 @@ scripts/*
 !scripts/run_magfilo_master_pipeline.py
 !scripts/run_quadrant_coremantle_transformer_pipeline.py
 !scripts/run_transformer_pipeline_gpu.py
+!scripts/train_crop_unet_1024_cldice.py
+!scripts/infer_crop_unet_cldice.py
+!scripts/run_cldice_calibration_sweep.py
 
 # Track only official champion submissions
 submissions/*
