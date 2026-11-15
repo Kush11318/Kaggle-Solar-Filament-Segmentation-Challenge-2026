@@ -39,6 +39,7 @@ submissions/*
 submission_*.csv
 !submissions/submission_champion_v1_precision_snapped.csv
 !submissions/submission_rebuilt_champion_041.csv
+!submissions/submission_quadrant_coremantle_champion.csv
 
 # Exploration notebooks and retrospective logs
 *.ipynb
