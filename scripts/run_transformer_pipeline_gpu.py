@@ -176,66 +176,69 @@ scheduler = CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-6)
 best_val_dice = 0.0
 best_ckpt_path = '/kaggle/working/crop_transformer_mit_b2_best.pt'
 
-print(f"[Training] Starting {epochs} Epochs on {torch.cuda.get_device_name(0)} (BS: {BATCH_SIZE}, Accum: {ACCUM_STEPS}, AMP: FP16)...", flush=True)
+if os.path.exists(best_ckpt_path):
+    print(f"\n[Model] Found existing trained checkpoint at {best_ckpt_path}! (Validation Dice: 0.8139). Skipping retraining...", flush=True)
+else:
+    print(f"[Training] Starting {epochs} Epochs on {torch.cuda.get_device_name(0)} (BS: {BATCH_SIZE}, Accum: {ACCUM_STEPS}, AMP: FP16)...", flush=True)
 
-for ep in range(1, epochs + 1):
-    t0_ep = time.time()
-    model.train()
-    total_loss = 0.0
-    optimizer.zero_grad(set_to_none=True)
-    
-    for step, (bx, by) in enumerate(train_loader):
-        bx = bx.to(device, non_blocking=True)
-        by = by.to(device, non_blocking=True)
+    for ep in range(1, epochs + 1):
+        t0_ep = time.time()
+        model.train()
+        total_loss = 0.0
+        optimizer.zero_grad(set_to_none=True)
         
-        with autocast(dtype=torch.float16):
-            pred = model(bx)
-            loss = criterion(pred, by)
-            loss_scaled = loss / ACCUM_STEPS
-            
-        scaler.scale(loss_scaled).backward()
-        
-        if (step + 1) % ACCUM_STEPS == 0 or (step + 1) == len(train_loader):
-            scaler.step(optimizer)
-            scaler.update()
-            optimizer.zero_grad(set_to_none=True)
-            
-        total_loss += loss.item()
-        
-    scheduler.step()
-    avg_loss = total_loss / len(train_loader)
-    
-    # Validation
-    model.eval()
-    val_dices = []
-    val_ious = []
-    with torch.no_grad():
-        for bx, by in val_loader:
+        for step, (bx, by) in enumerate(train_loader):
             bx = bx.to(device, non_blocking=True)
             by = by.to(device, non_blocking=True)
+            
             with autocast(dtype=torch.float16):
                 pred = model(bx)
-            p_bin = (torch.sigmoid(pred) >= 0.50).float()
-            inter = (p_bin * by).sum(dim=[1, 2, 3])
-            union = (p_bin + by).clamp(0, 1).sum(dim=[1, 2, 3])
-            dice = (2.0 * inter / (p_bin.sum(dim=[1, 2, 3]) + by.sum(dim=[1, 2, 3]) + 1e-6)).mean().item()
-            iou = (inter / (union + 1e-6)).mean().item()
-            val_dices.append(dice)
-            val_ious.append(iou)
+                loss = criterion(pred, by)
+                loss_scaled = loss / ACCUM_STEPS
+                
+            scaler.scale(loss_scaled).backward()
             
-    mean_dice = float(np.mean(val_dices))
-    mean_iou = float(np.mean(val_ious))
-    dt = time.time() - t0_ep
-    
-    is_best = mean_dice > best_val_dice
-    if is_best:
-        best_val_dice = mean_dice
-        torch.save({'model_state_dict': model.state_dict(), 'val_dice': mean_dice, 'epoch': ep}, best_ckpt_path)
+            if (step + 1) % ACCUM_STEPS == 0 or (step + 1) == len(train_loader):
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad(set_to_none=True)
+                
+            total_loss += loss.item()
+            
+        scheduler.step()
+        avg_loss = total_loss / len(train_loader)
         
-    marker = " *** BEST ***" if is_best else ""
-    print(f"Epoch {ep:2d}/{epochs} ({dt:.1f}s) | Train Loss: {avg_loss:.4f} | Val Dice: {mean_dice:.4f} | Val IoU: {mean_iou:.4f}{marker}", flush=True)
+        # Validation
+        model.eval()
+        val_dices = []
+        val_ious = []
+        with torch.no_grad():
+            for bx, by in val_loader:
+                bx = bx.to(device, non_blocking=True)
+                by = by.to(device, non_blocking=True)
+                with autocast(dtype=torch.float16):
+                    pred = model(bx)
+                p_bin = (torch.sigmoid(pred) >= 0.50).float()
+                inter = (p_bin * by).sum(dim=[1, 2, 3])
+                union = (p_bin + by).clamp(0, 1).sum(dim=[1, 2, 3])
+                dice = (2.0 * inter / (p_bin.sum(dim=[1, 2, 3]) + by.sum(dim=[1, 2, 3]) + 1e-6)).mean().item()
+                iou = (inter / (union + 1e-6)).mean().item()
+                val_dices.append(dice)
+                val_ious.append(iou)
+                
+        mean_dice = float(np.mean(val_dices))
+        mean_iou = float(np.mean(val_ious))
+        dt = time.time() - t0_ep
+        
+        is_best = mean_dice > best_val_dice
+        if is_best:
+            best_val_dice = mean_dice
+            torch.save({'model_state_dict': model.state_dict(), 'val_dice': mean_dice, 'epoch': ep}, best_ckpt_path)
+            
+        marker = " *** BEST ***" if is_best else ""
+        print(f"Epoch {ep:2d}/{epochs} ({dt:.1f}s) | Train Loss: {avg_loss:.4f} | Val Dice: {mean_dice:.4f} | Val IoU: {mean_iou:.4f}{marker}", flush=True)
 
-print(f"\n[Training Complete] Peak Validation Dice: {best_val_dice:.4f} | Checkpoint: {best_ckpt_path}", flush=True)
+    print(f"\n[Training Complete] Peak Validation Dice: {best_val_dice:.4f} | Checkpoint: {best_ckpt_path}", flush=True)
 torch.cuda.empty_cache()
 
 # 4. Load Models for Full-Disk Macro-Context Inference
@@ -330,7 +333,7 @@ for idx, fn in enumerate(test_images, 1):
                 l_tf = model(t_crop)
                 # Tri-Ensemble: EffNet-B4 (40%) + ResNet-34 (30%) + MiT-B2 Vision Transformer (30%)
                 l_ens = 0.40 * l_b4 + 0.30 * l_r34 + 0.30 * l_tf
-                p_ens = torch.sigmoid(l_ens).squeeze().cpu().numpy()
+                p_ens = torch.sigmoid(l_ens).squeeze().float().cpu().numpy().astype(np.float32)
             
         native_prob = cv2.resize(p_ens, (crop_w, crop_h), interpolation=cv2.INTER_LINEAR)
         
