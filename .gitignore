@@ -9,6 +9,7 @@ checkpoints/*
 !checkpoints/yolo11m_staple_best.pt
 !checkpoints/crop_unet_effnet_b4_512_mined_best.pt
 !checkpoints/crop_unet_resnet34_512_mined_best.pt
+!checkpoints/cswin_dense_watershed_best.pt
 !checkpoints/disk_cache.json
 *.pth
 *.bin
@@ -31,6 +32,7 @@ scripts/*
 !scripts/generate_perfect_pipeline_figure.py
 !scripts/generate_truly_unique_crops_figure.py
 !scripts/run_magfilo_master_pipeline.py
+!scripts/run_quadrant_coremantle_transformer_pipeline.py
 
 # Track only official champion submissions
 submissions/*
