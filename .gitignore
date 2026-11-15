@@ -37,6 +37,8 @@ scripts/*
 !scripts/train_crop_unet_1024_cldice.py
 !scripts/infer_crop_unet_cldice.py
 !scripts/run_cldice_calibration_sweep.py
+!scripts/infer_dual_cldice_ensemble.py
+!scripts/run_remote_train_r34_cldice.py
 
 # Track only official champion submissions
 submissions/*
