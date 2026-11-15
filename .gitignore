@@ -23,11 +23,20 @@ PAPERS/
 experiments/
 analysis/
 evaluation/
-scripts/
 
-# Intermediate experimental submissions (keep only official champion)
+# Only track official champion runner scripts
+scripts/*
+!scripts/build_precision_snapped_candidates.py
+!scripts/audit_snapped_submissions.py
+!scripts/generate_perfect_pipeline_figure.py
+!scripts/generate_truly_unique_crops_figure.py
+!scripts/run_magfilo_master_pipeline.py
+
+# Track only official champion submissions
+submissions/*
 submission_*.csv
-!submission_champion_04618.csv
+!submissions/submission_champion_v1_precision_snapped.csv
+!submissions/submission_rebuilt_champion_041.csv
 
 # Exploration notebooks and retrospective logs
 *.ipynb

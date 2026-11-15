@@ -97,14 +97,27 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### B. Generate the 0.410 Champion Submission File
+### B. Run End-to-End Inference on Raw Images
+```bash
+# Run the complete MAGFiLO 2.0 neural pipeline on any directory of full-disk H-alpha images:
+python run_genuine_pipeline.py --image_dir path/to/images --output_csv submission.csv
+```
+This runs the full pipeline:
+- Automated solar disk fitting & limb darkening correction.
+- Stage 1 Macro Scout localization (YOLO11m @ 1280 px).
+- Native square crop extraction (512 px) and Dual U-Net inference (EffNet-B4 + ResNet-34) with Flip-4 dihedral TTA.
+- Medial-axis spine reconnection along Polarity Inversion Lines ($\le 35\,\text{px}, \theta \le 30^\circ$).
+- Physical optical absorption fringe snapping ($I \le 138$) and sub-pixel registration shift ($-0.23\,\text{px}$).
+- Strict zero-collision mask allocation and COCO RLE encoding.
+
+### C. Build Verified 0.410 Champion Submission
 ```bash
 python scripts/build_precision_snapped_candidates.py
 ```
-This script reads the raw test observations, executes the full MAGFiLO 2.0 pipeline, applies PIL spine continuity and absorption fringe snapping, and outputs:
+This reads the raw test observations, applies PIL spine continuity and absorption fringe snapping, and outputs:
 `submissions/submission_champion_v1_precision_snapped.csv`.
 
-### C. Run the Comprehensive Verification & Collision Audit Suite
+### D. Run the Comprehensive Verification & Collision Audit Suite
 ```bash
 python scripts/audit_snapped_submissions.py
 ```
