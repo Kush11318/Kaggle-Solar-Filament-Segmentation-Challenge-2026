@@ -152,12 +152,25 @@ class KaggleKernelClient:
                 except UnicodeEncodeError:
                     print(tb.encode("ascii", errors="replace").decode("ascii"), flush=True)
 
-            elif msg_type == "status":
-                if content.get("execution_state") == "idle":
-                    break
-
             elif msg_type == "execute_reply":
                 status = content.get("status", "unknown")
+
+            elif msg_type == "status":
+                if content.get("execution_state") == "idle":
+                    if status != "unknown":
+                        break
+                    # Wait briefly for execute_reply if status came first
+                    got_reply = False
+                    for _ in range(10):
+                        try:
+                            extra = json.loads(ws.recv())
+                            if extra.get("header", {}).get("msg_type") == "execute_reply":
+                                status = extra.get("content", {}).get("status", "unknown")
+                                got_reply = True
+                                break
+                        except Exception:
+                            pass
+                    break
 
         ws.close()
         return {
