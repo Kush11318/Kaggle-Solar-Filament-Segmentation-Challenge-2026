@@ -1,4 +1,7 @@
-import os, hashlib
+import os
+import sys
+import hashlib
+from pathlib import Path
 import pandas as pd
 import numpy as np
 from pycocotools import mask as mu
@@ -10,7 +13,7 @@ def compute_sha256(path):
             h.update(chunk)
     return h.hexdigest()
 
-def audit_submission(csv_path, expected_count):
+def audit_submission(csv_path, expected_count=None):
     print("=" * 80)
     print(f"AUDITING: {os.path.basename(csv_path)}")
     print("=" * 80)
@@ -20,7 +23,8 @@ def audit_submission(csv_path, expected_count):
     
     # 1. Structure
     assert list(df.columns) == ['filament_id', 'segmentation_rle'], f"Invalid columns: {df.columns}"
-    assert len(df) == expected_count, f"Row count mismatch: {len(df)} vs {expected_count}"
+    if expected_count is not None:
+        assert len(df) == expected_count, f"Row count mismatch: {len(df)} vs {expected_count}"
     
     df['image_stem'] = df['filament_id'].apply(lambda x: x.rsplit('_', 1)[0])
     n_images = df['image_stem'].nunique()
@@ -60,6 +64,19 @@ def audit_submission(csv_path, expected_count):
     return sha256
 
 if __name__ == "__main__":
-    sub_dir = r"d:\Kaggle\submissions"
-    s1 = audit_submission(os.path.join(sub_dir, "submission_champion_v1_precision_snapped.csv"), 1199)
-    s2 = audit_submission(os.path.join(sub_dir, "submission_rebuilt_041_precision_snapped.csv"), 1206)
+    # Resolve repository root dynamically (100% portable across Windows / Linux / macOS)
+    repo_root = Path(__file__).resolve().parent.parent
+    sub_dir = repo_root / "submissions"
+    
+    if len(sys.argv) > 1:
+        target_csv = Path(sys.argv[1])
+        audit_submission(str(target_csv))
+    else:
+        # Default: Audit verified champion submissions in repo
+        c1 = sub_dir / "submission_champion_v1_precision_snapped.csv"
+        if c1.exists():
+            audit_submission(str(c1), 1199)
+            
+        c2 = sub_dir / "submission_rebuilt_champion_041.csv"
+        if c2.exists():
+            audit_submission(str(c2), 1206)

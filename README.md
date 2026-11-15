@@ -11,7 +11,10 @@
 
 **Competition**: [Solar Filament Segmentation Challenge 2026 (MAGFiLO)](https://www.kaggle.com/competitions/filament-segmentation-2026)  
 **Host Organization**: Earth-Space AI Research (ESAIR) Lab, National Solar Observatory (NSO), U.S. National Science Foundation (NSF)  
-**Authors**: Kushagra Sharma, Nandini Gupta  
+**Authors & Participant Contacts**:  
+- **Nandini Gupta**: 
+andinigupta230470@acropolis.in  
+- **Kushagra Sharma**: kushagra.sharma11290@gmail.com  
 **Affiliation**: Acropolis Institute of Technology and Research, Indore, India  
 **Official Repository**: [https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026](https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026)  
 **Integrity Guarantee**: 100% deterministic algorithmic machine learning pipeline; dynamic inference from raw full-disk sensor pixels; zero hardcoding; zero pixel collisions.
@@ -143,6 +146,13 @@ Contains full step-by-step pipeline execution, visual verification with full-dis
 
 ```
 ├── MAGFiLO_2_0_JURY_SUBMISSION_NOTEBOOK.ipynb # Official IEEE BigData demonstration notebook
+├── run_genuine_pipeline.py           # Standalone genuine inference pipeline CLI
+├── eval_genuine_pipeline_on_val.py   # Official validation split evaluation harness (PQ/SQ/RQ)
+├── checkpoints/                      # Pre-trained deep learning weights (tracked in repository)
+│   ├── yolo11m_staple_best.pt        # Stage 1: Macro Scout Detector (45.3 MB)
+│   ├── crop_unet_effnet_b4_512_mined_best.pt # Stage 2: EfficientNet-B4 U-Net (81.7 MB)
+│   ├── crop_unet_resnet34_512_mined_best.pt  # Stage 2: ResNet-34 U-Net (97.9 MB)
+│   └── disk_cache.json               # Precomputed solar disk geometry cache
 ├── figures/
 │   ├── pipeline.png                  # Figure 1: 300 DPI 8-stage architecture workflow
 │   └── segmentation_examples.png     # Figure 2: Qualitative segmentation results on 20110312082634Lh
@@ -156,6 +166,8 @@ Contains full step-by-step pipeline execution, visual verification with full-dis
 │   ├── solar_physics.py              # Eddington-Barbier limb darkening normalization
 │   ├── spine_reconnection.py         # Bernasconi medial-axis skeleton reconnection
 │   └── crop_pipeline.py              # Native square crop extraction & coordinate mapping
+├── splits/
+│   └── val_gt_df.parquet             # Validation ground truth annotations (137 images)
 ├── submissions/
 │   ├── submission_champion_v1_precision_snapped.csv # Verified 0.410 Champion Submission
 │   └── submission_rebuilt_champion_041.csv          # Verified 0.410 Baseline Submission
