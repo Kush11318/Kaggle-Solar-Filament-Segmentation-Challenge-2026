@@ -53,7 +53,7 @@
 \email{kushagra.sharma11290@gmail.com}
 
 \begin{abstract}
-    This report describes \textbf{MAGFiLO 2.0}, our championship solution to the Solar Filament Segmentation Challenge~2026, an IEEE BigData competition on automatic instance segmentation of solar filaments in full-disk GONG H-$\alpha$ ($656.28$\,nm) observations. To address the extreme scale disparity between $2048\times2048$ full-disk imagery and fine filamentary spines ($<15$\,px width), radial limb darkening, and topological flux rope fragmentation, we developed a physics-guided decoupled architecture. A macro scout detector (YOLO11m at $1280\times1280$) localizes candidate regions with a 20\% contextual margin, followed by a dual deep convolutional U-Net ensemble (EfficientNet-B4 and ResNet-34) operating on native square crops at $512\times512$ resolution. The networks are trained using a topology-preserving compound loss combining Centerline Dice ($\mathcal{L}_{\text{clDice}}$), soft Dice, and binary cross-entropy, reinforced by 4-fold test-time augmentation (TTA). To optimize the official Panoptic Quality (PQ) metric without incurring severe false-negative or boundary-dilation penalties, MAGFiLO 2.0 introduces three key innovations: (1) Bernasconi medial-axis collinear spine continuity along Polarity Inversion Lines ($\le 35$\,px, $\theta \le 30^\circ$) to bridge fractured magnetic flux ropes, (2) physical optical absorption fringe snapping ($I \le 138$) that eliminates chromospheric granulation boundary bloat, and (3) sub-pixel registration shift correction ($-0.23$\,px). On the official benchmark, MAGFiLO 2.0 achieves a 4-fold cross-validation PQ of \textbf{0.4706} ($SQ = 0.6887, RQ = 0.6833$) and a verified champion Public Leaderboard score of \textbf{0.410} (tied for Rank~\#1 globally) with 1,199 detected instances across all 178 full-disk test observations with strictly zero pixel collisions. All source code is open-sourced at \url{https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026}.
+    This report describes \textbf{MAGFiLO 2.0}, our championship solution to the Solar Filament Segmentation Challenge~2026, an IEEE BigData competition on automatic instance segmentation of solar filaments in full-disk GONG H-$\alpha$ ($656.28$\,nm) observations. To address the extreme scale disparity between $2048\times2048$ full-disk imagery and fine filamentary spines ($<15$\,px width), radial limb darkening, and topological flux rope fragmentation, we developed a physics-guided decoupled architecture. A macro scout detector (YOLO11m at $1280\times1280$) localizes candidate regions with a 20\% contextual margin, followed by a dual deep convolutional U-Net ensemble (EfficientNet-B4 and ResNet-34) operating on native square crops at $512\times512$ resolution. The networks are trained using a topology-preserving compound loss combining Centerline Dice ($\mathcal{L}_{\text{clDice}}$), soft Dice, and binary cross-entropy, reinforced by 4-fold test-time augmentation (TTA). To optimize the official Panoptic Quality (PQ) metric without incurring severe false-negative or boundary-dilation penalties, MAGFiLO 2.0 introduces three key innovations: (1) Bernasconi medial-axis collinear spine continuity along Polarity Inversion Lines ($\le 35$\,px, $\theta \le 30^\circ$) to bridge fractured magnetic flux ropes, (2) physical optical absorption fringe snapping ($I \le 138$) that eliminates chromospheric granulation boundary bloat, and (3) sub-pixel registration shift correction ($-0.23$\,px). On the official benchmark, MAGFiLO 2.0 achieves a 4-fold cross-validation PQ of \textbf{0.4706} ($SQ = 0.6887, RQ = 0.6833$) and a verified champion Public Leaderboard score of \textbf{0.410} with 1,199 detected instances across all 178 full-disk test observations with strictly zero pixel collisions. All source code is open-sourced at \url{https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026}.
 \end{abstract}
 
 \maketitle
@@ -180,7 +180,7 @@ Connected components with an area below $150$\,px are filtered out as chromosphe
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.88\textwidth]{figures/segmentation_examples.png}
+\includegraphics[width=0.80\textwidth, height=5.8cm, keepaspectratio]{figures/segmentation_examples.png}
 \caption{Visual instance segmentation results produced by MAGFiLO 2.0 on a full-disk GONG H-$\alpha$ observation from the MAGFiLO benchmark dataset (\texttt{20110312082634Lh}). Left: Full-disk solar image showing Ground Truth (Green), Model Proposals (Red), and True Positive Overlaps (Yellow). Right: High-resolution $2\times$ zoomed native crops of three spatially distinct filaments showing strong IoU alignment ($\text{IoU} \approx 0.64\text{--}0.76$) and faithful topological recovery.}
 \label{fig:examples}
 \end{figure*}
@@ -228,32 +228,16 @@ MAGFiLO 1.0 (Baseline Dual Crop) & $0.684 \pm 0.004$ & $0.675 \pm 0.005$ & $0.46
     \item \textbf{Decoupled Native Cropping Overcomes Scale Bottleneck:} Standard full-disk architectures downsample $2048\times2048$ images, resulting in blurred boundaries on slender filaments ($<15$\,px width). When boundary misalignment drops $\text{IoU}$ below $0.5$, a candidate switches from a True Positive to both a False Positive and a False Negative, doubling the denominator penalty. Transitioning to native square cropping yielded the single largest performance jump ($+0.151$ Val PQ, $+0.11$ Public LB).
     \item \textbf{Dual Architecture Complementarity:} Ensembling EfficientNet-B4 (rich multi-scale semantic abstractions) with ResNet-34 (strong spatial inductive bias) improved Segmentation Quality from $0.634$ to $0.670$, confirming that model diversity reduces boundary jitter.
     \item \textbf{Spine Continuity Mitigates the FN Penalty:} Thin magnetic flux ropes broken by bright chromospheric network cells are frequently split into multiple sub-segments. The Bernasconi collinear spine reconnection module recovered discontinuous segments, increasing Recognition Quality ($\text{RQ}: 0.582 \to 0.676$).
-    \item \textbf{Boundary Snapping Protects the 0.5 IoU Gate:} Forensic analysis demonstrated that unconstrained neural dilation causes boundary bloat into quiet-sun granulation, dropping boundary IoU by $-18.8\%$. Snapping boundaries to the absorption fringe ($I \le 138$) together with sub-pixel registration shift elevated our performance to a verified champion Public Leaderboard score of \textbf{0.410} (1,199 instances across 178 test disks, tied for Rank~\#1 globally).
+    \item \textbf{Boundary Snapping Protects the 0.5 IoU Gate:} Forensic analysis demonstrated that unconstrained neural dilation causes boundary bloat into quiet-sun granulation, dropping boundary IoU by $-18.8\%$. Snapping boundaries to the absorption fringe ($I \le 138$) together with sub-pixel registration shift elevated our performance to a verified champion Public Leaderboard score of \textbf{0.410} (1,199 instances across 178 test disks,).
 \end{enumerate}
 
 \subsection{Computational Requirements and Operational Feasibility}
-All training and inference routines were benchmarked on dual NVIDIA Tesla T4 GPUs (16\,GB VRAM each). The end-to-end inference latency on a $2048\times2048$ full-disk image breaks down as follows:
-\begin{itemize}
-    \item \textit{Optical Preprocessing \& Limb Correction:} $\approx 0.18$\,s
-    \item \textit{Stage 1 Macro Scout (YOLO11m @ 1280\,px):} $\approx 0.22$\,s
-    \item \textit{Native Square Crop Dual-U-Net Refinement (512\,px):} $\approx 1.25$\,s
-    \item \textit{Spine Reconnection, Snapping \& Allocation:} $\approx 0.20$\,s
-\end{itemize}
-Total runtime is approximately \textbf{1.85 seconds per full disk}, readily supporting real-time operational solar flare and Coronal Mass Ejection (CME) early warning systems.
+All training and inference routines were benchmarked on dual NVIDIA Tesla T4 GPUs (16\,GB VRAM each). The end-to-end inference latency on a \times2048$ full-disk image breaks down into optical limb preprocessing ($\approx 0.18$\,s), Stage~1 macro scout localization ($\approx 0.22$\,s), native square crop dual-U-Net refinement ($\approx 1.25$\,s), and spine reconnection, snapping, and disjoint allocation ($\approx 0.20$\,s). Total runtime is approximately \textbf{1.85 seconds per full disk}, readily supporting real-time operational solar flare and Coronal Mass Ejection (CME) early warning systems.
 
 \subsection{Strengths, Limitations, and Future Work}
-\textbf{Strengths:}
-\begin{itemize}
-    \item \textit{Sub-Pixel Resolution Fidelity:} Operating on native $512\times512$ square crops prevents interpolation blur on thin curvilinear spines while remaining computationally lightweight.
-    \item \textit{Physics-Guided Boundary Calibration:} Optical absorption fringe snapping and medial-axis PIL reconnection directly model chromospheric physics, avoiding heuristic boundary distortion.
-    \item \textit{Deterministic Mask Disjointness:} Confidence-weighted pixel allocation strictly guarantees zero-overlap compliance with the competition's panoptic evaluation engine.
-\end{itemize}
+\textbf{Strengths:} Operating on native \times512$ square crops prevents interpolation blur on thin curvilinear spines while maintaining sub-pixel boundary fidelity. In addition, physical optical absorption fringe snapping ({\text{raw}} \le 138$) and medial-axis PIL reconnection directly embed chromospheric physical constraints, while deterministic confidence-weighted allocation strictly guarantees zero-overlap compliance under competition rules.
 
-\noindent\textbf{Limitations and Future Directions:}
-\begin{itemize}
-    \item \textit{Off-Limb Prominence Attenuation:} Filaments extending off the solar limb into the corona encounter significantly lower signal-to-noise ratios in pure line-center H-$\alpha$. Future pipelines could incorporate radial gradient high-pass filtering to boost off-limb visibility.
-    \item \textit{Multi-Instrument Coronal Fusion:} While ground-based H-$\alpha$ captures chromospheric absorption, space-based Extreme Ultraviolet (EUV) imagers (e.g., SDO/AIA 304\,\AA\ and 193\,\AA) capture coronal emission channels. Multi-modal fusion could resolve ambiguous polarity inversion lines during high-activity flare events.
-\end{itemize}
+\textbf{Limitations \& Future Directions:} Filaments extending off the solar limb into the corona encounter attenuated signal-to-noise ratios in pure line-center H-$\alpha$, which could be mitigated via radial gradient high-pass filtering. Furthermore, multi-modal coronal fusion with space-based Extreme Ultraviolet (EUV) observations (e.g., SDO/AIA 304\,\AA\ and 193\,\AA) offers a promising direction to resolve ambiguous magnetic flux ropes during high-activity flare events.
 
 % ==================================== %
 %            ACKNOWLEDGMENT            %
