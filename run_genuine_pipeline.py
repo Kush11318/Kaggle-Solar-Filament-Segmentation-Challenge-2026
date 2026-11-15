@@ -156,11 +156,18 @@ class GenuineSolarPipeline:
         prob_mean = (prob_accum / len(flips)).squeeze().cpu().numpy()
         return prob_mean
 
-    def process_image(self, raw_img: np.ndarray) -> List[Tuple[np.ndarray, float]]:
+    def process_image(self, raw_img: Any) -> List[Tuple[np.ndarray, float]]:
         """
         Processes a single 2048x2048 raw solar image end-to-end.
+        Accepts either an image path (str or Path) or a numpy uint8 array.
         Returns a list of (binary_mask, confidence_score) tuples.
         """
+        if isinstance(raw_img, (str, bytes, os.PathLike)):
+            img_path = str(raw_img)
+            raw_img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            if raw_img is None:
+                raise FileNotFoundError(f"Could not read image from {img_path}")
+
         h, w = raw_img.shape[:2]
         
         # 1. Solar Disk Geometry & Limb Fitting
