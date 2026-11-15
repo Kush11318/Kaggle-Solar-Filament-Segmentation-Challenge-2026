@@ -13,7 +13,7 @@
 **Host Organization**: Earth-Space AI Research (ESAIR) Lab, National Solar Observatory (NSO), U.S. National Science Foundation (NSF)  
 **Authors & Participant Contacts**:  
 - **Nandini Gupta**: 
-andinigupta230470@acropolis.in  
+nandinigupta230470@acropolis.in  
 - **Kushagra Sharma**: kushagra.sharma11290@gmail.com  
 **Affiliation**: Acropolis Institute of Technology and Research, Indore, India  
 **Official Repository**: [https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026](https://github.com/Kush11318/Kaggle-Solar-Filament-Segmentation-Challenge-2026)  
